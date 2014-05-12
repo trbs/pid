@@ -32,14 +32,14 @@ class PidFile(object):
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
                  register_term_signal_handler=True, lock_pidfile=True,
-                 chmod=0o644, uid=-1, gid=-1):
+                 chmod=0o644, uid=-1, gid=-1, force_tmpdir=False):
         self.logger = logging.getLogger("PidFile")
         if pidname is None:
             pidname = "%s.pid" % os.path.basename(sys.argv[0])
         if enforce_dotpid_postfix and not pidname.endswith(".pid"):
             pidname = "%s.pid" % pidname
         if piddir is None:
-            if os.path.isdir("/var/run/"):
+            if os.path.isdir("/var/run/") and force_tmpdir is False:
                 piddir = "/var/run/"
             else:
                 piddir = tempfile.gettempdir()

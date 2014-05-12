@@ -1,5 +1,4 @@
 from contextlib import contextmanager
-from nose.tools import raises
 import pid
 
 
@@ -33,8 +32,7 @@ def raising(*exc_types):
     except:
         raise
     else:
-        raise AssertionError("Failed to throw exception of type(s) %s." % (
-                ", ".join(exc_type.__name__ for exc_type in exc_types),))
+        raise AssertionError("Failed to throw exception of type(s) %s." % (", ".join(exc_type.__name__ for exc_type in exc_types),))
 
 
 def test_pid_class():
@@ -42,46 +40,65 @@ def test_pid_class():
     pidfile.create()
     pidfile.close()
 
+
 def test_pid_context_manager():
-    with pid.PidFile() as pidfile:
+    with pid.PidFile():
         pass
+
 
 def test_pid_custom_name():
-    with pid.PidFile(pidname="testpidfile") as pidfile:
+    with pid.PidFile(pidname="testpidfile"):
         pass
+
+
+def test_pid_enforce_dotpid_postfix():
+    with pid.PidFile(pidname="testpidfile", enforce_dotpid_postfix=False) as pidfile:
+        assert not pidfile.filename.endswith(".pid")
+
+
+def test_pid_force_tmpdir():
+    with pid.PidFile(force_tmpdir=True):
+        pass
+
 
 def test_pid_custom_dir():
-    with pid.PidFile(piddir="/tmp") as pidfile:
+    with pid.PidFile(piddir="/tmp/testpidfile.dir/"):
         pass
+
 
 def test_pid_no_term_signal():
-    with pid.PidFile(register_term_signal_handler=False) as pidfile:
+    with pid.PidFile(register_term_signal_handler=False):
         pass
+
 
 def test_pid_chmod():
-    with pid.PidFile(chmod=0o600) as pidfile:
+    with pid.PidFile(chmod=0o600):
         pass
 
+
 def test_pid_already_locked():
-    with pid.PidFile() as pidfile1:
+    with pid.PidFile():
         with raising(pid.PidFileAlreadyLockedError):
-            with pid.PidFile() as pidfile2:
+            with pid.PidFile():
                 pass
+
 
 def test_pid_already_locked_custom_name():
-    with pid.PidFile(pidname="testpidfile") as pidfile1:
+    with pid.PidFile(pidname="testpidfile"):
         with raising(pid.PidFileAlreadyLockedError):
-            with pid.PidFile(pidname="testpidfile") as pidfile2:
+            with pid.PidFile(pidname="testpidfile"):
                 pass
+
 
 def test_pid_already_running():
-    with pid.PidFile(lock_pidfile=False) as pidfile1:
+    with pid.PidFile(lock_pidfile=False):
         with raising(pid.PidFileAlreadyRunningError):
-            with pid.PidFile(lock_pidfile=False) as pidfile2:
+            with pid.PidFile(lock_pidfile=False):
                 pass
 
+
 def test_pid_already_running_custom_name():
-    with pid.PidFile(lock_pidfile=False, pidname="testpidfile") as pidfile1:
+    with pid.PidFile(lock_pidfile=False, pidname="testpidfile"):
         with raising(pid.PidFileAlreadyRunningError):
-            with pid.PidFile(lock_pidfile=False, pidname="testpidfile") as pidfile2:
+            with pid.PidFile(lock_pidfile=False, pidname="testpidfile"):
                 pass
