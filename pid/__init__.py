@@ -8,7 +8,7 @@ import logging
 import tempfile
 
 
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 
 class PidFileError(Exception):
