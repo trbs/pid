@@ -1,6 +1,9 @@
 pid
 ===
 
+.. image:: https://travis-ci.org/trbs/pid.svg?branch=master
+    :target: https://travis-ci.org/trbs/pid
+
 PidFile class featuring:
 
  - stale detection
