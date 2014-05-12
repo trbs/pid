@@ -125,12 +125,32 @@ def test_pid_decorator():
 def test_pid_decorator_already_locked():
     from pid.decorator import pidfile
 
-    @pidfile()
+    @pidfile("testpiddecorator")
     def test_decorator():
         with raising(pid.PidFileAlreadyLockedError):
-            @pidfile()
+            @pidfile("testpiddecorator")
             def test_decorator2():
                 pass
             test_decorator2()
 
     test_decorator()
+
+
+def test_pid_already_closed():
+    pidfile = pid.PidFile()
+    pidfile.create()
+    pidfile.fh.close()
+    pidfile.close()
+
+
+def test_pid_gid():
+    pidfile = pid.PidFile(gid=1)
+    pidfile.create()
+    pidfile.close()
+
+
+def test_pid_check():
+    with pid.PidFile() as pidfile1:
+        pidfile2 = pid.PidFile()
+        with raising(pid.PidFileAlreadyRunningError):
+            pidfile2.check()

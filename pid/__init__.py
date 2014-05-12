@@ -57,6 +57,7 @@ class PidFile(object):
         self.gid = gid
         self.filename = os.path.abspath(os.path.join(piddir, pidname))
         self.pid = os.getpid()
+        self.fh = None
 
         if register_term_signal_handler:
             # Register TERM signal handler to make sure atexit runs on TERM signal
@@ -76,15 +77,14 @@ class PidFile(object):
             except (IOError, ValueError) as exc:
                 self.close(fh=fh)
                 raise PidFileUnreadableError(exc)
-            else:
-                try:
-                    os.kill(pid, 0)
-                except OSError as exc:
-                    if exc.errno == errno.ESRCH:
-                        # this pid is not running
-                        return None
-                    self.close(fh=fh)
-                    raise PidFileAlreadyRunningError(exc)
+            try:
+                os.kill(pid, 0)
+            except OSError as exc:
+                if exc.errno == errno.ESRCH:
+                    # this pid is not running
+                    return None
+                self.close(fh=fh)
+                raise PidFileAlreadyRunningError(exc)
             self.close(fh=fh)
             raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
         if self.fh is None:
@@ -121,6 +121,7 @@ class PidFile(object):
         try:
             fh.close()
         except IOError as exc:
+            print "XXX"
             # ignore error when file was already closed
             if exc.errno != errno.EBADF:
                 raise
