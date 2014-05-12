@@ -150,7 +150,7 @@ def test_pid_gid():
 
 
 def test_pid_check():
-    with pid.PidFile() as pidfile1:
+    with pid.PidFile():
         pidfile2 = pid.PidFile()
         with raising(pid.PidFileAlreadyRunningError):
             pidfile2.check()
