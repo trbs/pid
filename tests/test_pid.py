@@ -144,11 +144,11 @@ def test_pid_already_closed():
     pidfile.close()
 
 
-#def test_pid_gid():
-#    gid = grp.getgrnam("nobody").gr_gid
-#    pidfile = pid.PidFile(gid=gid)
-#    pidfile.create()
-#    pidfile.close()
+# def test_pid_gid():
+#     gid = grp.getgrnam("nobody").gr_gid
+#     pidfile = pid.PidFile(gid=gid)
+#     pidfile.create()
+#     pidfile.close()
 
 
 def test_pid_check():
