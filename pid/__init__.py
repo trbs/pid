@@ -121,7 +121,6 @@ class PidFile(object):
         try:
             fh.close()
         except IOError as exc:
-            print "XXX"
             # ignore error when file was already closed
             if exc.errno != errno.EBADF:
                 raise
