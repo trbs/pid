@@ -4,6 +4,10 @@ pid
 .. image:: https://travis-ci.org/trbs/pid.svg?branch=master
     :target: https://travis-ci.org/trbs/pid
 
+.. image:: https://coveralls.io/repos/trbs/pid/badge.png
+    :target: https://coveralls.io/r/trbs/pid
+
+
 PidFile class featuring:
 
  - stale detection
