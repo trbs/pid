@@ -1,5 +1,4 @@
 import os
-import grp
 from contextlib import contextmanager
 
 import pid
@@ -145,6 +144,7 @@ def test_pid_already_closed():
 
 
 # def test_pid_gid():
+#     import grp
 #     gid = grp.getgrnam("nobody").gr_gid
 #     pidfile = pid.PidFile(gid=gid)
 #     pidfile.create()
