@@ -31,7 +31,7 @@ with codecs.open('README.rst', encoding='utf-8') as f:
 setup(
     name="pid",
     version=find_version('pid/__init__.py'),
-    description="Pidfile featuring stale detection and file-locking, can also be used as context-manager",
+    description="Pidfile featuring stale detection and file-locking, can also be used as context-manager or decorator",
     long_description=long_description,
     url='https://github.com/trbs/pid/',
     author='Trbs',
