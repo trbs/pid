@@ -21,8 +21,25 @@ Context Manager
 
 PidFile can be used as a context manager::
 
+  from pid import PidFile
+  
   with PidFile():
     do_something()
+
+
+Decorator
+---------
+
+PidFile can also be used a a decorator::
+
+  from pid.decorator import pidfile
+  
+  @pidfile
+  def main():
+    pass
+
+  if __name__ == "__main__":
+    main()
 
 
 Exception Order

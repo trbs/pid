@@ -48,7 +48,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
     ],
-    keywords='pid pidfile',
+    keywords='pid pidfile context manager decorator',
     packages=["pid"],
     install_requires=[],
     test_suite='nose.collector',

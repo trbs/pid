@@ -1,4 +1,6 @@
+import os
 from contextlib import contextmanager
+
 import pid
 
 
@@ -44,6 +46,12 @@ def test_pid_class():
 def test_pid_context_manager():
     with pid.PidFile():
         pass
+
+
+def test_pid_pid():
+    with pid.PidFile() as pidfile:
+        pidnr = int(open(pidfile.filename, "r").readline().strip())
+        assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
 
 
 def test_pid_custom_name():
@@ -102,3 +110,27 @@ def test_pid_already_running_custom_name():
         with raising(pid.PidFileAlreadyRunningError):
             with pid.PidFile(lock_pidfile=False, pidname="testpidfile"):
                 pass
+
+
+def test_pid_decorator():
+    from pid.decorator import pidfile
+
+    @pidfile()
+    def test_decorator():
+        pass
+
+    test_decorator()
+
+
+def test_pid_decorator_already_locked():
+    from pid.decorator import pidfile
+
+    @pidfile()
+    def test_decorator():
+        with raising(pid.PidFileAlreadyLockedError):
+            @pidfile()
+            def test_decorator2():
+                pass
+            test_decorator2()
+
+    test_decorator()
