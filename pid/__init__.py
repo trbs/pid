@@ -47,9 +47,9 @@ class PidFile(object):
         if not os.path.isdir(piddir):
             os.makedirs(piddir)
         if not os.access(piddir, os.R_OK):
-            raise IOError("Pid file directory '%s' cannot be read")
+            raise IOError("Pid file directory '%s' cannot be read" % piddir)
         if not os.access(piddir, os.W_OK):
-            raise IOError("Pid file directory '%s' cannot be written to")
+            raise IOError("Pid file directory '%s' cannot be written to" % piddir)
 
         self.lock_pidfile = lock_pidfile
         self.chmod = chmod
