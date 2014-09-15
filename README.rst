@@ -49,6 +49,5 @@ In default mode PidFile will try to acquire a file lock before anything else.
 This means that normally you get a PidFileAlreadyLockedError instead of the
 PidFileAlreadyRunningError when running a program twice.
 
-If you just want to know if a program is already running its easiest to use
+If you just want to know if a program is already running its easiest to catch
 just PidFileError since it will capture all possible PidFile exceptions.
-
