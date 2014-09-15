@@ -34,7 +34,7 @@ PidFile can also be used a a decorator::
 
   from pid.decorator import pidfile
   
-  @pidfile
+  @pidfile()
   def main():
     pass
 
