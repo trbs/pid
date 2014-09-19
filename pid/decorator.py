@@ -5,7 +5,7 @@ from . import PidFile
 
 def pidfile(*pid_args, **pid_kwargs):
     if len(pid_args) > 0:
-        assert not isinstance(pid_args[0], types.FunctionType), "pidfile decorator must be called with perentisies, like: @pidfile()"
+        assert not isinstance(pid_args[0], types.FunctionType), "pidfile decorator must be called with parentheses, like: @pidfile()"
 
     def wrapper(func):
         @wraps(func)
