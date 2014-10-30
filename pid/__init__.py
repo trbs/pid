@@ -10,6 +10,8 @@ import tempfile
 
 __version__ = "1.0.8"
 
+DEFAULT_PID_DIR = "/var/run/"
+
 
 class PidFileError(Exception):
     pass
@@ -39,8 +41,8 @@ class PidFile(object):
         if enforce_dotpid_postfix and not pidname.endswith(".pid"):
             pidname = "%s.pid" % pidname
         if piddir is None:
-            if os.path.isdir("/var/run/") and force_tmpdir is False:
-                piddir = "/var/run/"
+            if os.path.isdir(DEFAULT_PID_DIR) and force_tmpdir is False:
+                piddir = DEFAULT_PID_DIR
             else:
                 piddir = tempfile.gettempdir()
 
