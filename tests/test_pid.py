@@ -4,7 +4,8 @@ from contextlib import contextmanager
 
 import pid
 
-pid.DEFAULT_PID_DIR="/tmp"
+pid.DEFAULT_PID_DIR = "/tmp"
+
 
 # https://code.google.com/p/python-nose/issues/detail?id=175
 @contextmanager

@@ -85,9 +85,9 @@ class PidFile(object):
                 if exc.errno == errno.ESRCH:
                     # this pid is not running
                     return None
-                self.close(fh=fh, cleanup = False)
+                self.close(fh=fh, cleanup=False)
                 raise PidFileAlreadyRunningError(exc)
-            self.close(fh=fh, cleanup = False)
+            self.close(fh=fh, cleanup=False)
             raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
         if self.fh is None:
             if os.path.isfile(self.filename):
@@ -102,7 +102,7 @@ class PidFile(object):
             try:
                 fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             except IOError as exc:
-                self.close(cleanup = False)
+                self.close(cleanup=False)
                 raise PidFileAlreadyLockedError(exc)
         self.check()
         if self.chmod:
@@ -117,7 +117,7 @@ class PidFile(object):
         self.fh.seek(0)
         atexit.register(self.close)
 
-    def close(self, fh=None, cleanup = True):
+    def close(self, fh=None, cleanup=True):
         if not fh:
             fh = self.fh
         try:
