@@ -1,8 +1,10 @@
 import os
+import os.path
 from contextlib import contextmanager
 
 import pid
 
+pid.DEFAULT_PID_DIR="/tmp"
 
 # https://code.google.com/p/python-nose/issues/detail?id=175
 @contextmanager
@@ -85,31 +87,39 @@ def test_pid_chmod():
 
 
 def test_pid_already_locked():
-    with pid.PidFile():
+    with pid.PidFile() as _pid:
         with raising(pid.PidFileAlreadyLockedError):
             with pid.PidFile():
                 pass
+        assert os.path.exists(_pid.filename)
+    assert not os.path.exists(_pid.filename)
 
 
 def test_pid_already_locked_custom_name():
-    with pid.PidFile(pidname="testpidfile"):
+    with pid.PidFile(pidname="testpidfile") as _pid:
         with raising(pid.PidFileAlreadyLockedError):
             with pid.PidFile(pidname="testpidfile"):
                 pass
+        assert os.path.exists(_pid.filename)
+    assert not os.path.exists(_pid.filename)
 
 
 def test_pid_already_running():
-    with pid.PidFile(lock_pidfile=False):
+    with pid.PidFile(lock_pidfile=False) as _pid:
         with raising(pid.PidFileAlreadyRunningError):
             with pid.PidFile(lock_pidfile=False):
                 pass
+        assert os.path.exists(_pid.filename)
+    assert not os.path.exists(_pid.filename)
 
 
 def test_pid_already_running_custom_name():
-    with pid.PidFile(lock_pidfile=False, pidname="testpidfile"):
+    with pid.PidFile(lock_pidfile=False, pidname="testpidfile") as _pid:
         with raising(pid.PidFileAlreadyRunningError):
             with pid.PidFile(lock_pidfile=False, pidname="testpidfile"):
                 pass
+        assert os.path.exists(_pid.filename)
+    assert not os.path.exists(_pid.filename)
 
 
 def test_pid_decorator():
