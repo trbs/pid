@@ -10,6 +10,8 @@ import tempfile
 
 __version__ = "1.0.8"
 
+DEFAULT_PID_DIR = "/var/run/"
+
 
 class PidFileError(Exception):
     pass
@@ -39,8 +41,8 @@ class PidFile(object):
         if enforce_dotpid_postfix and not pidname.endswith(".pid"):
             pidname = "%s.pid" % pidname
         if piddir is None:
-            if os.path.isdir("/var/run/") and force_tmpdir is False:
-                piddir = "/var/run/"
+            if os.path.isdir(DEFAULT_PID_DIR) and force_tmpdir is False:
+                piddir = DEFAULT_PID_DIR
             else:
                 piddir = tempfile.gettempdir()
 
@@ -83,9 +85,9 @@ class PidFile(object):
                 if exc.errno == errno.ESRCH:
                     # this pid is not running
                     return None
-                self.close(fh=fh)
+                self.close(fh=fh, cleanup = False)
                 raise PidFileAlreadyRunningError(exc)
-            self.close(fh=fh)
+            self.close(fh=fh, cleanup = False)
             raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
         if self.fh is None:
             if os.path.isfile(self.filename):
@@ -100,7 +102,7 @@ class PidFile(object):
             try:
                 fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             except IOError as exc:
-                self.close()
+                self.close(cleanup = False)
                 raise PidFileAlreadyLockedError(exc)
         self.check()
         if self.chmod:
@@ -115,7 +117,7 @@ class PidFile(object):
         self.fh.seek(0)
         atexit.register(self.close)
 
-    def close(self, fh=None):
+    def close(self, fh=None, cleanup = True):
         if not fh:
             fh = self.fh
         try:
@@ -125,7 +127,7 @@ class PidFile(object):
             if exc.errno != errno.EBADF:
                 raise
         finally:
-            if os.path.isfile(self.filename):
+            if os.path.isfile(self.filename) and cleanup:
                 os.remove(self.filename)
 
     def __enter__(self):
