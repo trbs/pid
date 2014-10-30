@@ -1,0 +1,66 @@
+Changelog
+=========
+
+1.0.9
+-----
+
+ - Wrong documentation on how to call the decorator
+ - Allow to set default pid dir at runtime.
+ - Make sure pid files are nor prematurely removed.
+
+
+1.0.8
+-----
+
+ - disable gid test for now
+
+
+1.0.7
+-----
+
+ - update title in setup.py
+
+
+1.0.6
+-----
+
+ - more unit tests
+
+
+1.0.5
+-----
+
+ - fix flake8 errors
+
+
+1.0.4
+-----
+
+ - fix flake8 errors
+ - add pid/decorator.py
+
+1.0.3
+-----
+
+ - add coveralls badge to README
+ - add travis badge to README
+ - set rights on /var/run in travis
+
+
+1.0.2
+-----
+
+ - use DESCRIPTION as README
+
+
+1.0.1
+-----
+
+ - Add force tempdir
+ - Add travis
+
+
+1.0.0
+-----
+
+ - Initial commit
