@@ -1,5 +1,6 @@
 import os
 import os.path
+import signal
 from contextlib import contextmanager
 
 import pid
@@ -78,8 +79,33 @@ def test_pid_custom_dir():
 
 
 def test_pid_no_term_signal():
-    with pid.PidFile(register_term_signal_handler=False):
+    def _noop(*args, **kwargs):
         pass
+
+    signal.signal(signal.SIGTERM, _noop)
+    with pid.PidFile(register_term_signal_handler=False):
+        assert signal.getsignal(signal.SIGTERM) is _noop
+
+
+def test_pid_term_signal():
+    def _noop(*args, **kwargs):
+        pass
+
+    signal.signal(signal.SIGTERM, _noop)
+    with pid.PidFile(register_term_signal_handler=True):
+        assert signal.getsignal(signal.SIGTERM) is not _noop
+
+
+def test_pid_custom_term_signal():
+    def _noop(*args, **kwargs):
+        pass
+
+    def _custom_signal_func(*args, **kwargs):
+        pass
+
+    signal.signal(signal.SIGTERM, _noop)
+    with pid.PidFile(register_term_signal_handler=True, term_signal_handler=_custom_signal_func):
+        assert signal.getsignal(signal.SIGTERM) is _custom_signal_func
 
 
 def test_pid_chmod():
@@ -162,8 +188,34 @@ def test_pid_already_closed():
 #     pidfile.close()
 
 
-def test_pid_check():
+def test_pid_check_already_running():
     with pid.PidFile():
         pidfile2 = pid.PidFile()
         with raising(pid.PidFileAlreadyRunningError):
             pidfile2.check()
+
+
+def test_pid_lazy_check_already_running():
+    with pid.PidFile(lazy=True):
+        pidfile2 = pid.PidFile()
+        with raising(pid.PidFileAlreadyRunningError):
+            pidfile2.check()
+
+
+def test_pid_lazy_check_is_none():
+    pidfile = pid.PidFile(lazy=True)
+    assert pidfile.check() is None
+
+
+def test_pid_lazy():
+    pidfile = pid.PidFile(pidname="testpiddecorator", lazy=True)
+    assert pidfile.fh is None
+    assert pidfile.filename is None
+    assert pidfile.pid is None
+    assert pidfile.pidname == "testpiddecorator"
+    pidfile.pidname = "testpiddecorator2"
+    with pidfile as _pid:
+        assert _pid.fh is not None
+        assert _pid.filename is not None
+        assert _pid.pid is not None
+        assert "testpiddecorator2" in _pid.filename
