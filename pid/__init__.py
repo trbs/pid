@@ -31,8 +31,8 @@ class PidFileAlreadyLockedError(PidFileError):
 
 class PidFile(object):
     __slots__ = ("pid", "pidname", "piddir", "enforce_dotpid_postfix", "register_term_signal_handler",
-                 "term_signal_handler", "filename", "fh", "logger", "lock_pidfile", "chmod", "uid",
-                 "gid", "force_tmpdir", "lazy")
+                 "term_signal_handler", "filename", "fh", "lock_pidfile", "chmod", "uid",
+                 "gid", "force_tmpdir", "lazy", "_logger")
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
                  register_term_signal_handler=True, term_signal_handler=None,
@@ -54,11 +54,20 @@ class PidFile(object):
         self.filename = None
         self.pid = None
 
+        self._logger = None
+
         if not self.lazy:
             self._setup()
 
+
+    @property
+    def logger(self):
+        if not self._logger:
+            self._logger = logging.getLogger("PidFile")
+
+        return self._logger
+
     def _setup(self):
-        self.logger = logging.getLogger("PidFile")
         self.logger.debug("%r entering setup", self)
         if self.filename is None:
             self.pid = os.getpid()
@@ -165,12 +174,13 @@ class PidFile(object):
         atexit.register(self.close)
 
     def close(self, fh=None, cleanup=True):
+        self.logger.debug("%r closing pidfile: %s", self, self.filename)
+
         if not fh:
             fh = self.fh
         try:
-            if fh is None or self.lazy is True:
+            if fh is None:
                 return
-            self.logger.debug("%r closing pidfile: %s", self, self.filename)
             fh.close()
         except IOError as exc:
             # ignore error when file was already closed
