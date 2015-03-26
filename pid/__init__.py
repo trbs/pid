@@ -11,7 +11,6 @@ import tempfile
 __version__ = "1.1.0"
 
 DEFAULT_PID_DIR = "/var/run/"
-logger = logging.getLogger("PidFile")
 
 
 class PidFileError(Exception):
@@ -32,18 +31,16 @@ class PidFileAlreadyLockedError(PidFileError):
 
 class PidFile(object):
     __slots__ = ("pid", "pidname", "piddir", "enforce_dotpid_postfix", "register_term_signal_handler",
-                 "term_signal_handler", "filename", "fh", "logger", "lock_pidfile", "chmod", "uid",
-                 "gid", "force_tmpdir", "lazy")
+                 "filename", "fh", "lock_pidfile", "chmod", "uid",
+                 "gid", "force_tmpdir", "lazy", "_logger")
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
-                 register_term_signal_handler=True, term_signal_handler=None,
-                 lock_pidfile=True, chmod=0o644, uid=-1, gid=-1, force_tmpdir=False,
-                 lazy=False):
+                 register_term_signal_handler=True, lock_pidfile=True, chmod=0o644,
+                 uid=-1, gid=-1, force_tmpdir=False, lazy=True):
         self.pidname = pidname
         self.piddir = piddir
         self.enforce_dotpid_postfix = enforce_dotpid_postfix
         self.register_term_signal_handler = register_term_signal_handler
-        self.term_signal_handler = term_signal_handler
         self.lock_pidfile = lock_pidfile
         self.chmod = chmod
         self.uid = uid
@@ -55,14 +52,27 @@ class PidFile(object):
         self.filename = None
         self.pid = None
 
+        self._logger = None
+
         if not self.lazy:
             self._setup()
 
+    @property
+    def logger(self):
+        if not self._logger:
+            self._logger = logging.getLogger("PidFile")
+
+        return self._logger
+
     def _setup(self):
+        self.logger.debug("%r entering setup", self)
         if self.filename is None:
             self.pid = os.getpid()
             self.filename = self._make_filename()
             self._register_term_signal()
+
+        # setup should only be performed once
+        self.lazy = False
 
     def _make_filename(self):
         pidname = self.pidname
@@ -91,17 +101,12 @@ class PidFile(object):
         if self.register_term_signal_handler:
             # Register TERM signal handler to make sure atexit runs on TERM signal
 
-            term_signal_handler = self.term_signal_handler
-            if term_signal_handler is None:
-                def sigterm_noop_handler(*args, **kwargs):
-                    raise SystemExit(1)
-                term_signal_handler = sigterm_noop_handler
+            def sigterm_noop_handler(*args, **kwargs):
+                raise SystemExit(1)
 
-            if signal.getsignal(signal.SIGTERM) is not term_signal_handler:
-                signal.signal(signal.SIGTERM, term_signal_handler)
+            signal.signal(signal.SIGTERM, sigterm_noop_handler)
 
     def check(self):
-        logger.debug("%r check pidfile: %s", self, self.filename)
 
         def inner_check(fh):
             try:
@@ -124,6 +129,11 @@ class PidFile(object):
             self.close(fh=fh, cleanup=False)
             raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
 
+        if self.lazy:
+            self._setup()
+
+        self.logger.debug("%r check pidfile: %s", self, self.filename)
+
         if self.fh is None:
             if self.filename and os.path.isfile(self.filename):
                 with open(self.filename, "r") as fh:
@@ -132,9 +142,10 @@ class PidFile(object):
             inner_check(self.fh)
 
     def create(self):
-        logger.debug("%r create pidfile: %s", self, self.filename)
         if self.lazy:
             self._setup()
+
+        self.logger.debug("%r create pidfile: %s", self, self.filename)
         self.fh = open(self.filename, 'a+')
         if self.lock_pidfile:
             try:
@@ -156,7 +167,8 @@ class PidFile(object):
         atexit.register(self.close)
 
     def close(self, fh=None, cleanup=True):
-        logger.debug("%r closing pidfile: %s", self, self.filename)
+        self.logger.debug("%r closing pidfile: %s", self, self.filename)
+
         if not fh:
             fh = self.fh
         try:
