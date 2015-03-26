@@ -31,18 +31,16 @@ class PidFileAlreadyLockedError(PidFileError):
 
 class PidFile(object):
     __slots__ = ("pid", "pidname", "piddir", "enforce_dotpid_postfix", "register_term_signal_handler",
-                 "term_signal_handler", "filename", "fh", "lock_pidfile", "chmod", "uid",
+                 "filename", "fh", "lock_pidfile", "chmod", "uid",
                  "gid", "force_tmpdir", "lazy", "_logger")
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
-                 register_term_signal_handler=True, term_signal_handler=None,
-                 lock_pidfile=True, chmod=0o644, uid=-1, gid=-1, force_tmpdir=False,
-                 lazy=True):
+                 register_term_signal_handler=True, lock_pidfile=True, chmod=0o644,
+                 uid=-1, gid=-1, force_tmpdir=False, lazy=True):
         self.pidname = pidname
         self.piddir = piddir
         self.enforce_dotpid_postfix = enforce_dotpid_postfix
         self.register_term_signal_handler = register_term_signal_handler
-        self.term_signal_handler = term_signal_handler
         self.lock_pidfile = lock_pidfile
         self.chmod = chmod
         self.uid = uid
@@ -58,7 +56,6 @@ class PidFile(object):
 
         if not self.lazy:
             self._setup()
-
 
     @property
     def logger(self):
@@ -104,14 +101,11 @@ class PidFile(object):
         if self.register_term_signal_handler:
             # Register TERM signal handler to make sure atexit runs on TERM signal
 
-            term_signal_handler = self.term_signal_handler
-            if term_signal_handler is None:
-                def sigterm_noop_handler(*args, **kwargs):
-                    raise SystemExit(1)
-                term_signal_handler = sigterm_noop_handler
+            def sigterm_noop_handler(*args, **kwargs):
+                raise SystemExit(1)
+            term_signal_handler = sigterm_noop_handler
 
-            if signal.getsignal(signal.SIGTERM) is not term_signal_handler:
-                signal.signal(signal.SIGTERM, term_signal_handler)
+            signal.signal(signal.SIGTERM, term_signal_handler)
 
     def check(self):
 

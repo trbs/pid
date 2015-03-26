@@ -103,9 +103,10 @@ def test_pid_custom_term_signal():
     def _custom_signal_func(*args, **kwargs):
         pass
 
-    signal.signal(signal.SIGTERM, _noop)
-    with pid.PidFile(register_term_signal_handler=True, term_signal_handler=_custom_signal_func):
-        assert signal.getsignal(signal.SIGTERM) is _custom_signal_func
+    signal.signal(signal.SIGTERM, _custom_signal_func)
+    assert signal.getsignal(signal.SIGTERM) is _custom_signal_func
+    with pid.PidFile(register_term_signal_handler=True):
+        assert signal.getsignal(signal.SIGTERM) is not _custom_signal_func
 
 
 def test_pid_chmod():
