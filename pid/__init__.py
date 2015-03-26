@@ -37,7 +37,7 @@ class PidFile(object):
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
                  register_term_signal_handler=True, term_signal_handler=None,
                  lock_pidfile=True, chmod=0o644, uid=-1, gid=-1, force_tmpdir=False,
-                 lazy=False):
+                 lazy=True):
         self.pidname = pidname
         self.piddir = piddir
         self.enforce_dotpid_postfix = enforce_dotpid_postfix
