@@ -35,7 +35,7 @@ class PidFile(object):
                  "gid", "force_tmpdir", "lazy", "_logger")
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
-                 register_term_signal_handler=True, lock_pidfile=True, chmod=0o644,
+                 register_term_signal_handler='auto', lock_pidfile=True, chmod=0o644,
                  uid=-1, gid=-1, force_tmpdir=False, lazy=True):
         self.pidname = pidname
         self.piddir = piddir
@@ -98,16 +98,24 @@ class PidFile(object):
         return filename
 
     def _register_term_signal(self):
-        if self.register_term_signal_handler:
-            # Register TERM signal handler to make sure atexit runs on TERM signal
+        register_term_signal_handler = self.register_term_signal_handler
+        if register_term_signal_handler == 'auto':
+            current_signal = signal.getsignal(signal.SIGTERM)
+            if current_signal in (signal.SIG_DFL, signal.SIG_IGN, None):
+                register_term_signal_handler = True
+            else:
+                register_term_signal_handler = False
 
+        if callable(register_term_signal_handler):
+            signal.signal(signal.SIGTERM, register_term_signal_handler)
+        elif register_term_signal_handler:
+            # Register TERM signal handler to make sure atexit runs on TERM signal
             def sigterm_noop_handler(*args, **kwargs):
                 raise SystemExit(1)
 
             signal.signal(signal.SIGTERM, sigterm_noop_handler)
 
     def check(self):
-
         def inner_check(fh):
             try:
                 fh.seek(0)
