@@ -202,6 +202,15 @@ def test_pid_lazy_check_already_running():
             pidfile2.check()
 
 
+def test_pid_double_lazy_check_already_running():
+    with pid.PidFile(lazy=True):
+        # context manager should be entered at this
+        # point and the PID locked
+        pidfile2 = pid.PidFile(lazy=True)
+        with raising(pid.PidFileAlreadyRunningError):
+            pidfile2.check()
+
+
 def test_pid_lazy_check_is_none():
     pidfile = pid.PidFile(lazy=True)
     assert pidfile.check() is None

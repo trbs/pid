@@ -11,7 +11,6 @@ import tempfile
 __version__ = "1.1.0"
 
 DEFAULT_PID_DIR = "/var/run/"
-logger = logging.getLogger("PidFile")
 
 
 class PidFileError(Exception):
@@ -59,10 +58,15 @@ class PidFile(object):
             self._setup()
 
     def _setup(self):
+        self.logger = logging.getLogger("PidFile")
+        self.logger.debug("%r entering setup", self)
         if self.filename is None:
             self.pid = os.getpid()
             self.filename = self._make_filename()
             self._register_term_signal()
+
+        # setup should only be performed once
+        self.lazy = False
 
     def _make_filename(self):
         pidname = self.pidname
@@ -101,7 +105,6 @@ class PidFile(object):
                 signal.signal(signal.SIGTERM, term_signal_handler)
 
     def check(self):
-        logger.debug("%r check pidfile: %s", self, self.filename)
 
         def inner_check(fh):
             try:
@@ -124,6 +127,11 @@ class PidFile(object):
             self.close(fh=fh, cleanup=False)
             raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
 
+        if self.lazy:
+            self._setup()
+
+        self.logger.debug("%r check pidfile: %s", self, self.filename)
+
         if self.fh is None:
             if self.filename and os.path.isfile(self.filename):
                 with open(self.filename, "r") as fh:
@@ -132,9 +140,10 @@ class PidFile(object):
             inner_check(self.fh)
 
     def create(self):
-        logger.debug("%r create pidfile: %s", self, self.filename)
         if self.lazy:
             self._setup()
+
+        self.logger.debug("%r create pidfile: %s", self, self.filename)
         self.fh = open(self.filename, 'a+')
         if self.lock_pidfile:
             try:
@@ -156,12 +165,12 @@ class PidFile(object):
         atexit.register(self.close)
 
     def close(self, fh=None, cleanup=True):
-        logger.debug("%r closing pidfile: %s", self, self.filename)
         if not fh:
             fh = self.fh
         try:
-            if fh is None:
+            if fh is None or self.lazy is True:
                 return
+            self.logger.debug("%r closing pidfile: %s", self, self.filename)
             fh.close()
         except IOError as exc:
             # ignore error when file was already closed
