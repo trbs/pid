@@ -103,9 +103,8 @@ class PidFile(object):
 
             def sigterm_noop_handler(*args, **kwargs):
                 raise SystemExit(1)
-            term_signal_handler = sigterm_noop_handler
 
-            signal.signal(signal.SIGTERM, term_signal_handler)
+            signal.signal(signal.SIGTERM, sigterm_noop_handler)
 
     def check(self):
 
