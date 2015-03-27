@@ -58,3 +58,27 @@ PidFileAlreadyRunningError when running a program twice.
 
 If you just want to know if a program is already running its easiest to catch
 just PidFileError since it will capture all possible PidFile exceptions.
+
+Behaviour
+---------
+
+Changes in version 2.0.0 and going forward:
+
+* pid is now friendly with daemon context managers such as 
+  `python-daemon <https://pypi.python.org/pypi/python-daemon/>`_ where
+  the PidFile context manager is passed as a parameter. The
+  new corrected behaviour will ensure the process environment is
+  determinde at the time of acquiring/checking the lock. Prior
+  behaviour would determine the process environment when
+  instancing the class which may result in incorrect determination
+  of the PID in the case of a process forking after instancing
+  PidFile.
+
+\
+
+* Cleanup of pidfile on termination is done using `atexit` module.
+  The default SIGTERM handler doesn't cleanly exit and therefore
+  the atexit registered functions will not execute. A custom
+  handler which triggers the atexit registered functions for cleanup
+  will override the default SIGTERM handler. If a prior signal handler
+  has been configured, then it will not be overridden.
