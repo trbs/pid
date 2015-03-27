@@ -194,3 +194,34 @@ def test_pid_check_already_running():
         pidfile2 = pid.PidFile()
         with raising(pid.PidFileAlreadyRunningError):
             pidfile2.check()
+
+def test_pid_default_term_signal():
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
+    with pid.PidFile():
+        assert callable(signal.getsignal(signal.SIGTERM)) is True
+
+
+def test_pid_ignore_term_signal():
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
+    with pid.PidFile():
+        assert signal.getsignal(signal.SIGTERM) == signal.SIG_IGN
+
+
+def test_pid_custom_term_signal():
+    def _noop(*args, **kwargs):
+        pass
+
+    signal.signal(signal.SIGTERM, _noop)
+
+    with pid.PidFile():
+        assert signal.getsignal(signal.SIGTERM) == _noop
+
+
+#def test_pid_unknown_term_signal():
+#    # Not sure how to properly test this when signal.getsignal returns None
+#    #  - perhaps by writing a C extension which might get ugly
+#    #
+#    with pid.PidFile():
+#        assert signal.getsignal(signal.SIGTERM) == None

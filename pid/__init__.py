@@ -98,8 +98,7 @@ class PidFile(object):
     def _register_term_signal(self):
         register_term_signal_handler = self.register_term_signal_handler
         if register_term_signal_handler == 'auto':
-            current_signal = signal.getsignal(signal.SIGTERM)
-            if current_signal in (signal.SIG_DFL, signal.SIG_IGN, None):
+            if signal.getsignal(signal.SIGTERM) == signal.SIG_DFL:
                 register_term_signal_handler = True
             else:
                 register_term_signal_handler = False
