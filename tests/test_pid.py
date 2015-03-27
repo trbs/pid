@@ -96,7 +96,7 @@ def test_pid_term_signal():
         assert signal.getsignal(signal.SIGTERM) is not _noop
 
 
-def test_pid_custom_term_signal():
+def test_pid_force_register_term_signal_handler():
     def _noop(*args, **kwargs):
         pass
 
@@ -195,6 +195,7 @@ def test_pid_check_already_running():
         with raising(pid.PidFileAlreadyRunningError):
             pidfile2.check()
 
+
 def test_pid_default_term_signal():
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
@@ -219,9 +220,9 @@ def test_pid_custom_term_signal():
         assert signal.getsignal(signal.SIGTERM) == _noop
 
 
-#def test_pid_unknown_term_signal():
-#    # Not sure how to properly test this when signal.getsignal returns None
-#    #  - perhaps by writing a C extension which might get ugly
-#    #
-#    with pid.PidFile():
-#        assert signal.getsignal(signal.SIGTERM) == None
+# def test_pid_unknown_term_signal():
+#     # Not sure how to properly test this when signal.getsignal returns None
+#     #  - perhaps by writing a C extension which might get ugly
+#     #
+#     with pid.PidFile():
+#         assert signal.getsignal(signal.SIGTERM) == None
