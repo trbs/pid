@@ -108,6 +108,7 @@ def test_pid_force_register_term_signal_handler():
     with pid.PidFile(register_term_signal_handler=True):
         assert signal.getsignal(signal.SIGTERM) is not _custom_signal_func
 
+
 def test_pid_supply_term_signal_handler():
     def _noop(*args, **kwargs):
         pass
