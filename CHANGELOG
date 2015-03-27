@@ -1,6 +1,31 @@
 Changelog
 =========
 
+2.0.0
+-----
+
+ - PidFile will now look at the environment variables it
+   needs just before acquiring the lock instead of at
+   instantiation time of the PidFile class.
+
+ - pid is now friendly with daemon context managers such
+   as python-daemon where the PidFile context manager is
+   passed as a parameter.
+
+ - The signal handler on SIGTERM is now only installed
+   automatically if there is no previous signal handler
+   installed.
+
+ - You can install a custom SIGTERM handler by specifying
+   a callable for 'register_term_signal_handler'.
+
+ - All in all we tried to make sure that with version 2.0.0
+   pid will play nice with other code and has sane defaults.
+
+ - Many thanks to nnathan who's efforts coding and testing
+   made this version possible.
+
+
 1.1.0
 -----
 
