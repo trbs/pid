@@ -194,38 +194,3 @@ def test_pid_check_already_running():
         pidfile2 = pid.PidFile()
         with raising(pid.PidFileAlreadyRunningError):
             pidfile2.check()
-
-
-def test_pid_lazy_check_already_running():
-    with pid.PidFile(lazy=True):
-        pidfile2 = pid.PidFile()
-        with raising(pid.PidFileAlreadyRunningError):
-            pidfile2.check()
-
-
-def test_pid_double_lazy_check_already_running():
-    with pid.PidFile(lazy=True):
-        # context manager should be entered at this
-        # point and the PID locked
-        pidfile2 = pid.PidFile(lazy=True)
-        with raising(pid.PidFileAlreadyRunningError):
-            pidfile2.check()
-
-
-def test_pid_lazy_check_is_none():
-    pidfile = pid.PidFile(lazy=True)
-    assert pidfile.check() is None
-
-
-def test_pid_lazy():
-    pidfile = pid.PidFile(pidname="testpiddecorator", lazy=True)
-    assert pidfile.fh is None
-    assert pidfile.filename is None
-    assert pidfile.pid is None
-    assert pidfile.pidname == "testpiddecorator"
-    pidfile.pidname = "testpiddecorator2"
-    with pidfile as _pid:
-        assert _pid.fh is not None
-        assert _pid.filename is not None
-        assert _pid.pid is not None
-        assert "testpiddecorator2" in _pid.filename
