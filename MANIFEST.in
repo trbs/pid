@@ -1,1 +1,3 @@
-include DESCRIPTION.rst
+include AUTHORS
+include CHANGELOG
+include LICENSE
