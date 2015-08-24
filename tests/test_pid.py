@@ -205,7 +205,7 @@ def test_pid_multiplecreate():
 
 def test_pid_gid():
     gid = os.getgid()
-    with pid.PidFile(gid=gid) as pidfile:
+    with pid.PidFile(gid=gid):
         pass
 
 
