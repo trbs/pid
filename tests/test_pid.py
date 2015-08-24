@@ -187,16 +187,55 @@ def test_pid_decorator_already_locked():
 def test_pid_already_closed():
     pidfile = pid.PidFile()
     pidfile.create()
-    pidfile.fh.close()
-    pidfile.close()
+    try:
+        pidfile.fh.close()
+    finally:
+        pidfile.close()
 
 
-# def test_pid_gid():
-#     import grp
-#     gid = grp.getgrnam("nobody").gr_gid
-#     pidfile = pid.PidFile(gid=gid)
-#     pidfile.create()
-#     pidfile.close()
+def test_pid_multiplecreate():
+    pidfile = pid.PidFile()
+    pidfile.create()
+    try:
+        with raising(pid.PidFileAlreadyRunningError):
+            pidfile.create()
+    finally:
+        pidfile.close()
+
+
+def test_pid_gid():
+    gid = os.getgid()
+    with pid.PidFile(gid=gid) as pidfile:
+        pass
+
+
+def test_pid_check_const_empty():
+    pidfile = pid.PidFile()
+    pidfile.setup()
+    try:
+        with open(pidfile.filename, "w") as f:
+            f.write("\n")
+        assert pidfile.check() == pid.PID_CHECK_EMPTY
+    finally:
+        pidfile.close()
+
+
+def test_pid_check_const_nofile():
+    pidfile = pid.PidFile()
+    assert pidfile.check() == pid.PID_CHECK_NOFILE
+
+
+def test_pid_check_const_samepid():
+    with pid.PidFile(allow_samepid=True) as pidfile:
+        assert pidfile.check() == pid.PID_CHECK_SAMEPID
+
+
+def test_pid_check_const_notrunning():
+    with pid.PidFile() as pidfile:
+        with open(pidfile.filename, "w") as f:
+            # hope this does not clash
+            f.write("999999999\n")
+        assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
 
 
 def test_pid_check_already_running():
@@ -204,6 +243,26 @@ def test_pid_check_already_running():
         pidfile2 = pid.PidFile()
         with raising(pid.PidFileAlreadyRunningError):
             pidfile2.check()
+
+
+def test_pid_check_samepid_with_blocks():
+    with pid.PidFile(allow_samepid=True):
+        with pid.PidFile(allow_samepid=True):
+            pass
+
+    pidfile = pid.PidFile(allow_samepid=True)
+    with pidfile:
+        with pidfile:
+            pass
+
+
+def test_pid_check_samepid():
+    pidfile = pid.PidFile(allow_samepid=True)
+    try:
+        pidfile.create()
+        pidfile.create()
+    finally:
+        pidfile.close()
 
 
 def test_pid_default_term_signal():
