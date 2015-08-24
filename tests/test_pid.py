@@ -197,7 +197,7 @@ def test_pid_multiplecreate():
     pidfile = pid.PidFile()
     pidfile.create()
     try:
-        with raising(pid.PidFileAlreadyRunningError):
+        with raising(pid.PidFileAlreadyRunningError, pid.PidFileAlreadyLockedError):
             pidfile.create()
     finally:
         pidfile.close()
