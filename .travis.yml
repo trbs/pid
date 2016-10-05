@@ -16,7 +16,7 @@ install:
   - pip install -e .
 
 script:
-  - flake8 --show-source --ignore=E501,W391 .
+  - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then flake8 --show-source --ignore=E501,W391 .; fi
   - nosetests -v --with-coverage --cover-package=pid
 
 after_success:
