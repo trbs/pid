@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.1.0
+-----
+
+ - Same pid support, multiple calls to the same process won't
+   file when allow_samepid=True is set.
+
 2.0.1
 -----
 
