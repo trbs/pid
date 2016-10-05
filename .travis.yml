@@ -5,6 +5,7 @@ python:
   - 2.7
   - 3.3
   - 3.4
+  - 3.5
   - pypy
   - pypy3
 
@@ -16,7 +17,8 @@ install:
   - pip install -e .
 
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then flake8 --show-source --ignore=E501,W391 .; fi
+  - if [[ $TRAVIS_PYTHON_VERSION != '2.6' ]]; then flake8 --show-source --ignore=E501,W391 .; fi
+  - flake8 --show-source --ignore=E501,W391 .
   - nosetests -v --with-coverage --cover-package=pid
 
 after_success:
