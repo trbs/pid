@@ -18,7 +18,7 @@ install:
 
 script:
   - echo $TRAVIS_PYTHON_VERSION
-  - if [[ $TRAVIS_PYTHON_VERSION != '2.6'* ]]; then flake8 --show-source --ignore=E501,W391 .; fi
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "2.6" ]]; then flake8 --show-source --ignore=E501,W391 .; fi
   - flake8 --show-source --ignore=E501,W391 .
   - nosetests -v --with-coverage --cover-package=pid
 
