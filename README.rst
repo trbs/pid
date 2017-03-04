@@ -29,10 +29,14 @@ Context Manager
 PidFile can be used as a context manager::
 
   from pid import PidFile
-  
-  with PidFile():
-    do_something()
+  import os
 
+  with PidFile('foo') as p:
+    print(p.pidname) # -> 'foo'
+    print(p.piddir) # -> '/var/run' But you can modify it when initialize PidFile.
+    print(os.listdir('/var/run')) # -> ['foo.pid']
+
+  # pid file will delete after 'with' literal.
 
 Decorator
 ---------
