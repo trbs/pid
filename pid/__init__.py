@@ -164,10 +164,9 @@ class PidFile(object):
             try:
                 fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             except IOError as exc:
-                self.close(cleanup=False)
-                if self.allow_samepid:
-                    return
-                raise PidFileAlreadyLockedError(exc)
+                if not self.allow_samepid:
+                    self.close(cleanup=False)
+                    raise PidFileAlreadyLockedError(exc)
 
         check_result = self.check()
         if check_result == PID_CHECK_SAMEPID:
