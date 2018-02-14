@@ -36,7 +36,7 @@ def raising(*exc_types):
         yield
     except exc_types:
         pass
-    except:
+    except Exception:
         raise
     else:
         raise AssertionError("Failed to throw exception of type(s) %s." % (", ".join(exc_type.__name__ for exc_type in exc_types),))
