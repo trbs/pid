@@ -1,6 +1,13 @@
 Changelog
 =========
 
+2.2.0
+-----
+
+ - Fix for allow_samepid=True check pid when same pid is allowed
+   and file is locked.
+ - Update to README example
+
 2.1.1
 -----
 
