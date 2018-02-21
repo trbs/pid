@@ -2,6 +2,7 @@ import os
 import os.path
 import signal
 from contextlib import contextmanager
+from mock import patch
 
 import pid
 
@@ -35,7 +36,7 @@ def raising(*exc_types):
         yield
     except exc_types:
         pass
-    except:
+    except Exception:
         raise
     else:
         raise AssertionError("Failed to throw exception of type(s) %s." % (", ".join(exc_type.__name__ for exc_type in exc_types),))
@@ -263,6 +264,23 @@ def test_pid_check_samepid():
         pidfile.create()
     finally:
         pidfile.close()
+
+
+def test_pid_check_samepid_two_processes():
+    pidfile_proc1 = pid.PidFile()
+    pidfile_proc2 = pid.PidFile(allow_samepid=True)
+
+    try:
+        with patch('pid.os.getpid') as mgetpid:
+            mgetpid.return_value = 1
+            pidfile_proc1.create()
+
+            mgetpid.return_value = 2
+            with raising(pid.PidFileAlreadyRunningError, pid.PidFileAlreadyLockedError):
+                pidfile_proc2.create()
+    finally:
+        pidfile_proc1.close()
+        pidfile_proc2.close()
 
 
 def test_pid_default_term_signal():
