@@ -7,11 +7,11 @@ pid
 .. image:: https://coveralls.io/repos/trbs/pid/badge.png
     :target: https://coveralls.io/r/trbs/pid
 
-.. image:: https://pypip.in/v/pid/badge.png
+.. image:: https://img.shields.io/pypi/v/pid.svg
     :target: https://pypi.python.org/pypi/pid/
     :alt: Latest PyPI version
 
-.. image:: https://pypip.in/d/pid/badge.png
+.. image:: https://img.shields.io/pypi/dm/pid.svg
     :target: https://pypi.python.org/pypi/pid/
     :alt: Number of PyPI downloads
 
