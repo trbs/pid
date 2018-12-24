@@ -1,11 +1,12 @@
 import os
 import sys
 import errno
-import fcntl
 import atexit
 import signal
 import logging
 import tempfile
+import fasteners.lock
+import psutil
 
 
 __version__ = "2.2.0"
@@ -132,16 +133,11 @@ class PidFile(object):
                 if self.allow_samepid and self.pid == pid:
                     return PID_CHECK_SAMEPID
 
-            try:
-                os.kill(pid, 0)
-            except OSError as exc:
-                if exc.errno == errno.ESRCH:
-                    # this pid is not running
-                    return PID_CHECK_NOTRUNNING
+            if psutil.pid_exists(pid):
                 self.close(fh=fh, cleanup=False)
-                raise PidFileAlreadyRunningError(exc)
-            self.close(fh=fh, cleanup=False)
-            raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
+                raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
+            else:
+                return PID_CHECK_NOTRUNNING
 
         self.setup()
 
@@ -162,7 +158,7 @@ class PidFile(object):
         self.fh = open(self.filename, 'a+')
         if self.lock_pidfile:
             try:
-                fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fasteners.lock.try_lock(self.fh)
             except IOError as exc:
                 if not self.allow_samepid:
                     self.close(cleanup=False)
@@ -172,10 +168,11 @@ class PidFile(object):
         if check_result == PID_CHECK_SAMEPID:
             return
 
-        if self.chmod:
-            os.fchmod(self.fh.fileno(), self.chmod)
-        if self.uid >= 0 or self.gid >= 0:
-            os.fchown(self.fh.fileno(), self.uid, self.gid)
+        if os.name == 'posix':
+            if self.chmod:
+                os.fchmod(self.fh.fileno(), self.chmod)
+            if self.uid >= 0 or self.gid >= 0:
+                os.fchown(self.fh.fileno(), self.uid, self.gid)
         self.fh.seek(0)
         self.fh.truncate()
         # pidfile must consist of the pid and a newline character
