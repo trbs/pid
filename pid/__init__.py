@@ -5,7 +5,6 @@ import atexit
 import signal
 import logging
 import tempfile
-import fasteners.lock
 import psutil
 
 
@@ -34,6 +33,10 @@ class PidFileAlreadyLockedError(PidFileError):
     pass
 
 
+class SamePidFileNotSupported(PidFileError):
+    pass
+
+
 class PidFile(object):
     __slots__ = ("pid", "pidname", "piddir", "enforce_dotpid_postfix", "register_term_signal_handler",
                  "filename", "fh", "lock_pidfile", "chmod", "uid", "gid", "force_tmpdir",
@@ -51,7 +54,10 @@ class PidFile(object):
         self.uid = uid
         self.gid = gid
         self.force_tmpdir = force_tmpdir
+
         self.allow_samepid = allow_samepid
+        if os.name != "posix" and self.allow_samepid:
+            raise SamePidFileNotSupported("Flag allow_samepid is not supported on non-POSIX systems")
 
         self.fh = None
         self.filename = None
@@ -126,6 +132,17 @@ class PidFile(object):
                 if not pid_str:
                     return PID_CHECK_EMPTY
                 pid = int(pid_str)
+            except PermissionError as exc:
+                if os.name == "posix":
+                    self.close(fh=fh)
+                    raise PidFileUnreadableError(exc)
+                else:
+                    if exc.errno == 13:
+                        # Can't access file twice on windows
+                        raise PidFileAlreadyLockedError("File already locked")
+                    else:
+                        # Unknown error
+                        raise
             except (IOError, ValueError) as exc:
                 self.close(fh=fh)
                 raise PidFileUnreadableError(exc)
@@ -158,7 +175,13 @@ class PidFile(object):
         self.fh = open(self.filename, 'a+')
         if self.lock_pidfile:
             try:
-                fasteners.lock.try_lock(self.fh)
+                if os.name == "posix":
+                    import fcntl
+                    fcntl.lockf(self.fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                else:
+                    import msvcrt
+                    msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
+                    self.logger.debug("locking %s success", str(self.pid))
             except IOError as exc:
                 if not self.allow_samepid:
                     self.close(cleanup=False)
@@ -168,7 +191,7 @@ class PidFile(object):
         if check_result == PID_CHECK_SAMEPID:
             return
 
-        if os.name == 'posix':
+        if os.name == "posix":
             if self.chmod:
                 os.fchmod(self.fh.fileno(), self.chmod)
             if self.uid >= 0 or self.gid >= 0:

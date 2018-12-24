@@ -55,8 +55,18 @@ def test_pid_context_manager():
 
 def test_pid_pid():
     with pid.PidFile() as pidfile:
-        pidnr = int(open(pidfile.filename, "r").readline().strip())
-        assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
+        try:
+            file = open(pidfile.filename, "r")
+            pidnr = int(file.readline().strip())
+            assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
+        except PermissionError as exc:
+            if exc.errno == 13:
+                file.close()
+                pass
+            else:
+                raise
+        finally:
+            file.close()
 
 
 def test_pid_custom_name():
@@ -205,9 +215,11 @@ def test_pid_multiplecreate():
 
 
 def test_pid_gid():
-    gid = os.getgid()
-    with pid.PidFile(gid=gid):
-        pass
+    # os.getgid() does not exist on windows
+    if hasattr(os, "getgid"):
+        gid = os.getgid()
+        with pid.PidFile(gid=gid):
+            pass
 
 
 def test_pid_check_const_empty():
@@ -227,60 +239,102 @@ def test_pid_check_const_nofile():
 
 
 def test_pid_check_const_samepid():
-    with pid.PidFile(allow_samepid=True) as pidfile:
-        assert pidfile.check() == pid.PID_CHECK_SAMEPID
+    if os.name == "posix":
+        with pid.PidFile(allow_samepid=True) as pidfile:
+            assert pidfile.check() == pid.PID_CHECK_SAMEPID
+    else:
+        with raising(pid.SamePidFileNotSupported):
+            with pid.PidFile(allow_samepid=True) as pidfile:
+                assert pidfile.check() == pid.PID_CHECK_SAMEPID
 
 
 def test_pid_check_const_notrunning():
     with pid.PidFile() as pidfile:
-        with open(pidfile.filename, "w") as f:
-            # hope this does not clash
-            f.write("999999999\n")
-        assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
+        try:
+            with open(pidfile.filename, "w") as f:
+                # hope this does not clash
+                f.write("999999999\n")
+                f.flush()
+                assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
+        except PermissionError as exc:
+            if exc.errno != 13:
+                raise
 
 
 def test_pid_check_already_running():
     with pid.PidFile():
         pidfile2 = pid.PidFile()
-        with raising(pid.PidFileAlreadyRunningError):
-            pidfile2.check()
+        if os.name == "posix":
+            with raising(pid.PidFileAlreadyRunningError):
+                pidfile2.check()
+        else:
+            with raising(pid.PidFileAlreadyLockedError):
+                pidfile2.check()
 
 
 def test_pid_check_samepid_with_blocks():
-    with pid.PidFile(allow_samepid=True):
+    def check_samepid_with_blocks_separate_objects():
         with pid.PidFile(allow_samepid=True):
-            pass
+            with pid.PidFile(allow_samepid=True):
+                pass
 
-    pidfile = pid.PidFile(allow_samepid=True)
-    with pidfile:
+    def check_samepid_with_blocks_same_objects():
+        pidfile = pid.PidFile(allow_samepid=True)
         with pidfile:
-            pass
+            with pidfile:
+                pass
+
+    if os.name == "posix":
+        check_samepid_with_blocks_separate_objects()
+    else:
+        with raising(pid.SamePidFileNotSupported):
+            check_samepid_with_blocks_separate_objects()
+
+    if os.name == "posix":
+        check_samepid_with_blocks_same_objects()
+    else:
+        with raising(pid.SamePidFileNotSupported):
+            check_samepid_with_blocks_same_objects()
 
 
 def test_pid_check_samepid():
-    pidfile = pid.PidFile(allow_samepid=True)
-    try:
-        pidfile.create()
-        pidfile.create()
-    finally:
-        pidfile.close()
+    def check_samepid():
+        pidfile = pid.PidFile(allow_samepid=True)
+        try:
+            pidfile.create()
+            pidfile.create()
+        finally:
+            pidfile.close()
+
+    if os.name == "posix":
+        check_samepid()
+    else:
+        with raising(pid.SamePidFileNotSupported):
+            check_samepid()
 
 
 def test_pid_check_samepid_two_processes():
-    pidfile_proc1 = pid.PidFile()
-    pidfile_proc2 = pid.PidFile(allow_samepid=True)
+    def check_samepid_two_processes():
+        pidfile_proc1 = pid.PidFile()
+        pidfile_proc2 = pid.PidFile(allow_samepid=True)
 
-    try:
-        with patch('pid.os.getpid') as mgetpid:
-            mgetpid.return_value = 1
-            pidfile_proc1.create()
+        try:
+            with patch('pid.os.getpid') as mgetpid:
+                mgetpid.return_value = 1
+                pidfile_proc1.create()
 
-            mgetpid.return_value = 2
-            with raising(pid.PidFileAlreadyRunningError, pid.PidFileAlreadyLockedError):
-                pidfile_proc2.create()
-    finally:
-        pidfile_proc1.close()
-        pidfile_proc2.close()
+                mgetpid.return_value = 2
+                with raising(pid.PidFileAlreadyRunningError, pid.PidFileAlreadyLockedError):
+                    pidfile_proc2.create()
+        finally:
+            pidfile_proc1.close()
+            pidfile_proc2.close()
+
+    if os.name == "posix":
+        check_samepid_two_processes()
+    else:
+        with raising(pid.SamePidFileNotSupported):
+            check_samepid_two_processes()
 
 
 def test_pid_default_term_signal():

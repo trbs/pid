@@ -52,7 +52,7 @@ setup(
     ],
     keywords='pid pidfile context manager decorator',
     packages=["pid"],
-    install_requires=[],
+    install_requires=['psutil>=5.4.8'],
     test_suite='nose.collector',
-    setup_requires=['nose>=1.0', 'fasteners>=0.14.1', 'psutil>=5.4.8'],
+    setup_requires=['nose>=1.0', 'psutil>=5.4.8'],
 )
