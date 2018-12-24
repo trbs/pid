@@ -157,7 +157,7 @@ class PidFile(object):
                         try:
                             fh.seek(0)
                             fh.read(1)
-                        except PermissionError as exc:
+                        except IOError as exc:
                             if exc.errno == 13:
                                 raise PidFileAlreadyRunningError(exc)
                             else:
