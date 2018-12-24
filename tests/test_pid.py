@@ -59,7 +59,7 @@ def test_pid_pid():
             file = open(pidfile.filename, "r")
             pidnr = int(file.readline().strip())
             assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
-        except PermissionError as exc:
+        except IOError as exc:
             if exc.errno == 13:
                 file.close()
                 pass
