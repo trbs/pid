@@ -132,17 +132,6 @@ class PidFile(object):
                 if not pid_str:
                     return PID_CHECK_EMPTY
                 pid = int(pid_str)
-            except PermissionError as exc:
-                if os.name == "posix":
-                    self.close(fh=fh)
-                    raise PidFileUnreadableError(exc)
-                else:
-                    if exc.errno == 13:
-                        # Can't access file twice on windows
-                        raise PidFileAlreadyLockedError("File already locked")
-                    else:
-                        # Unknown error
-                        raise
             except (IOError, ValueError) as exc:
                 self.close(fh=fh)
                 raise PidFileUnreadableError(exc)
@@ -163,6 +152,16 @@ class PidFile(object):
         if self.fh is None:
             if self.filename and os.path.isfile(self.filename):
                 with open(self.filename, "r") as fh:
+                    # Try to read from file to check if it is locked by the same process
+                    if os.name != "posix":
+                        try:
+                            fh.seek(0)
+                            fh.read(1)
+                        except PermissionError as exc:
+                            if exc.errno == 13:
+                                raise PidFileAlreadyRunningError(exc)
+                            else:
+                                raise
                     return inner_check(fh)
             return PID_CHECK_NOFILE
         else:
@@ -177,11 +176,14 @@ class PidFile(object):
             try:
                 if os.name == "posix":
                     import fcntl
-                    fcntl.lockf(self.fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 else:
                     import msvcrt
                     msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
                     self.logger.debug("locking %s success", str(self.pid))
+                    # Try to read from file to check if it is actually locked
+                    self.fh.seek(0)
+                    self.fh.read(1)
             except IOError as exc:
                 if not self.allow_samepid:
                     self.close(cleanup=False)

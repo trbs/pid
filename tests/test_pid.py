@@ -264,12 +264,8 @@ def test_pid_check_const_notrunning():
 def test_pid_check_already_running():
     with pid.PidFile():
         pidfile2 = pid.PidFile()
-        if os.name == "posix":
-            with raising(pid.PidFileAlreadyRunningError):
-                pidfile2.check()
-        else:
-            with raising(pid.PidFileAlreadyLockedError):
-                pidfile2.check()
+        with raising(pid.PidFileAlreadyRunningError):
+            pidfile2.check()
 
 
 def test_pid_check_samepid_with_blocks():
