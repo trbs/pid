@@ -256,7 +256,7 @@ def test_pid_check_const_notrunning():
                 f.write("999999999\n")
                 f.flush()
                 assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
-        except PermissionError as exc:
+        except IOError as exc:
             if exc.errno != 13:
                 raise
 
