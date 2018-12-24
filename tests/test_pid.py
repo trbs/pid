@@ -216,7 +216,7 @@ def test_pid_multiplecreate():
 
 def test_pid_gid():
     # os.getgid() does not exist on windows
-    if hasattr(os, "getgid"):
+    if os.name == "posix":
         gid = os.getgid()
         with pid.PidFile(gid=gid):
             pass
