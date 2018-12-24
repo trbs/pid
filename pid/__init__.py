@@ -180,7 +180,6 @@ class PidFile(object):
                 else:
                     import msvcrt
                     msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
-                    self.logger.debug("locking %s success", str(self.pid))
                     # Try to read from file to check if it is actually locked
                     self.fh.seek(0)
                     self.fh.read(1)

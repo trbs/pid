@@ -42,6 +42,19 @@ def raising(*exc_types):
         raise AssertionError("Failed to throw exception of type(s) %s." % (", ".join(exc_type.__name__ for exc_type in exc_types),))
 
 
+@contextmanager
+def raising_windows_io_error():
+    try:
+        yield
+    except IOError as exc:
+        if exc.errno != 13:
+            raise
+    except Exception:
+        raise
+    else:
+        raise AssertionError("Failed to throw exception")
+
+
 def test_pid_class():
     pidfile = pid.PidFile()
     pidfile.create()
@@ -54,19 +67,16 @@ def test_pid_context_manager():
 
 
 def test_pid_pid():
-    with pid.PidFile() as pidfile:
-        try:
-            file = open(pidfile.filename, "r")
-            pidnr = int(file.readline().strip())
+    def check_pid_pid():
+        with pid.PidFile() as pidfile:
+            pidnr = int(open(pidfile.filename, "r").readline().strip())
             assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
-        except IOError as exc:
-            if exc.errno == 13:
-                file.close()
-                pass
-            else:
-                raise
-        finally:
-            file.close()
+
+    if os.name == "posix":
+        check_pid_pid()
+    else:
+        with raising_windows_io_error():
+            check_pid_pid()
 
 
 def test_pid_custom_name():
@@ -239,26 +249,31 @@ def test_pid_check_const_nofile():
 
 
 def test_pid_check_const_samepid():
-    if os.name == "posix":
+    def check_const_samepid():
         with pid.PidFile(allow_samepid=True) as pidfile:
             assert pidfile.check() == pid.PID_CHECK_SAMEPID
+
+    if os.name == "posix":
+        check_const_samepid()
     else:
         with raising(pid.SamePidFileNotSupported):
-            with pid.PidFile(allow_samepid=True) as pidfile:
-                assert pidfile.check() == pid.PID_CHECK_SAMEPID
+            check_const_samepid()
 
 
 def test_pid_check_const_notrunning():
-    with pid.PidFile() as pidfile:
-        try:
+    def check_const_notrunning():
+        with pid.PidFile() as pidfile:
             with open(pidfile.filename, "w") as f:
                 # hope this does not clash
                 f.write("999999999\n")
                 f.flush()
                 assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
-        except IOError as exc:
-            if exc.errno != 13:
-                raise
+
+    if os.name == "posix":
+        check_const_notrunning()
+    else:
+        with raising_windows_io_error():
+            check_const_notrunning()
 
 
 def test_pid_check_already_running():
