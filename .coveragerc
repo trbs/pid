@@ -1,0 +1,6 @@
+[report]
+exclude_lines =
+    pragma: no cover
+    if os.name != "posix"
+    if os.name == "nt":
+    raise SamePidFileNotSupported

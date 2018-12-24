@@ -153,7 +153,7 @@ class PidFile(object):
             if self.filename and os.path.isfile(self.filename):
                 with open(self.filename, "r") as fh:
                     # Try to read from file to check if it is locked by the same process
-                    if os.name != "posix":
+                    if os.name == "nt":
                         try:
                             fh.seek(0)
                             fh.read(1)
@@ -177,7 +177,7 @@ class PidFile(object):
                 if os.name == "posix":
                     import fcntl
                     fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                else:
+                elif os.name == "nt":
                     import msvcrt
                     msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
                     # Try to read from file to check if it is actually locked
