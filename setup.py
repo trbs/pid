@@ -54,5 +54,5 @@ setup(
     packages=["pid"],
     install_requires=[],
     test_suite='nose.collector',
-    setup_requires=['nose>=1.0'],
+    tests_require=['nose>=1.0'],
 )
