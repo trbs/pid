@@ -54,7 +54,8 @@ before_install:
 install:
   # Install python on windows machine, environment variables should be set in the matrix above
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-      choco install python${PY_VERSION_BASE} --version ${PY_VERSION}
+      echo "/c/Python${PY_VERSION_PATH}:/c/Python${PY_VERSION_PATH}/Scripts:$PATH";
+      choco install python${PY_VERSION_BASE} --version ${PY_VERSION};
       export PATH="/c/Python${PY_VERSION_PATH}:/c/Python${PY_VERSION_PATH}/Scripts:$PATH";
       python -m pip install --upgrade pip wheel;
     fi
