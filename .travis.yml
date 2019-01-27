@@ -2,7 +2,6 @@ language: python
 dist: xenial  # https://github.com/travis-ci/travis-ci/issues/9831
 
 os:
-  - windows
   - linux
 
 python:
@@ -16,6 +15,16 @@ python:
 
 before_install:
   - sudo chmod 0777 /var/run
+
+# https://github.com/WeblateOrg/translation-finder/blob/master/.travis.yml#L20-L26
+matrix:
+  include:
+  - os: windows
+    python: 3.7
+    before_install:
+      - choco install python3
+      - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+      - python -m pip install --upgrade pip wheel
 
 install:
   - pip install "coverage>=3.6" "nose>=1.3.0" "flake8>=2.1" "coveralls>=0.3" "mock>=2.0.0" "psutil>=5.4.8"
