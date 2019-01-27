@@ -1,6 +1,7 @@
 import os
 import os.path
 import signal
+import sys
 from contextlib import contextmanager
 from mock import patch
 
@@ -69,6 +70,10 @@ def test_pid_context_manager():
 def test_pid_pid():
     def check_pid_pid():
         with pid.PidFile() as pidfile:
+            # On windows Python2.7 opens a file but reads an empty line from it
+            # Python3 throws IOError(13, Access denied) instead
+            if os.name == "nt" and sys.version_info.major < 3:
+                return
             pidnr = int(open(pidfile.filename, "r").readline().strip())
             assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
 
