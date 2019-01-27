@@ -16,11 +16,6 @@ python:
   - pypy3.5-6.0
   - 3.7
 
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      sudo chmod 0777 /var/run;
-    fi
-
 # Python is not natively supported in windows yet, have to install it through shell script
 # https://github.com/WeblateOrg/translation-finder/blob/master/.travis.yml#L20-L33
 matrix:
@@ -29,20 +24,38 @@ matrix:
     language: sh
     python: 2.7
     env:
-      - PY_VERSION=2.7 PY_VERSION_PATH=27
+      - PY_VERSION_BASE=2 PY_VERSION=2.7.15 PY_VERSION_PATH=27
+  - os: windows
+    language: sh
+    python: 3.4
+    env:
+      - PY_VERSION_BASE=3 PY_VERSION=3.4.4 PY_VERSION_PATH=34
+  - os: windows
+    language: sh
+    python: 3.5
+    env:
+      - PY_VERSION_BASE=3 PY_VERSION=3.5.4 PY_VERSION_PATH=35
+  - os: windows
+    language: sh
+    python: 3.6
+    env:
+      - PY_VERSION_BASE=3 PY_VERSION=3.6.8 PY_VERSION_PATH=36
   - os: windows
     language: sh
     python: 3.7
     env:
-      - PY_VERSION=3.7 PY_VERSION_PATH=37
+      - PY_VERSION_BASE=3 PY_VERSION=3.7.2 PY_VERSION_PATH=37
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      sudo chmod 0777 /var/run;
+    fi
 
 install:
   # Install python on windows machine, environment variables should be set in the matrix above
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-      choco install python$PY_VERSION;
-      echo "1/c/Python$PY_VERSION_PATH:/c/Python$PY_VERSION_PATH/Scripts:$PATH";
-      echo "2/c/Python${PY_VERSION_PATH}:/c/Python${PY_VERSION_PATH}/Scripts:$PATH"
-      export PATH="/c/Python$PY_VERSION_PATH:/c/Python$PY_VERSION_PATH/Scripts:$PATH";
+      choco install python${PY_VERSION_BASE} --version ${PY_VERSION}
+      export PATH="/c/Python${PY_VERSION_PATH}:/c/Python${PY_VERSION_PATH}/Scripts:$PATH";
       python -m pip install --upgrade pip wheel;
     fi
   - pip install "coverage>=3.6" "nose>=1.3.0" "flake8>=2.1" "coveralls>=0.3" "mock>=2.0.0" "psutil>=5.4.8"
