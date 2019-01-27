@@ -1,24 +1,30 @@
 language: python
-dist: xenial  # https://github.com/travis-ci/travis-ci/issues/9831
 
-os:
-  - linux
+# Explicitly specifying default OS for clarity
+os: linux
 
 python:
   - 2.7
   - 3.4
   - 3.5
   - 3.6
-  - 3.7
   - pypy2.7-6.0
   - pypy3.5-6.0
 
 before_install:
   - sudo chmod 0777 /var/run
 
-# https://github.com/WeblateOrg/translation-finder/blob/master/.travis.yml#L20-L26
+# Python is not natively supported in windows yet, have to install it through shell script
+# https://github.com/WeblateOrg/translation-finder/blob/master/.travis.yml#L20-L33
 matrix:
   include:
+  - os: windows
+    language: sh
+    python: "2.7"
+    before_install:
+      - choco install python2
+      - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
+      - python -m pip install --upgrade pip wheel
   - os: windows
     language: sh
     python: 3.7
@@ -26,6 +32,10 @@ matrix:
       - choco install python3
       - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
       - python -m pip install --upgrade pip wheel
+  # Python 3.7 can be obtained from xenial
+  # https://github.com/travis-ci/travis-ci/issues/9831
+  - python: 3.7
+    dist: xenial
 
 install:
   - pip install "coverage>=3.6" "nose>=1.3.0" "flake8>=2.1" "coveralls>=0.3" "mock>=2.0.0" "psutil>=5.4.8"
