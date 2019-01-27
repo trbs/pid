@@ -18,7 +18,7 @@ python:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      sudo chmod 0777 /var/run
+      sudo chmod 0777 /var/run;
     fi
 
 # Python is not natively supported in windows yet, have to install it through shell script
@@ -39,9 +39,9 @@ matrix:
 install:
   # Install python on windows machine, environment variables should be set in the matrix above
   - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
-      choco install python${PY_VERSION}
-      export PATH="/c/Python${PY_VERSION_PATH}:/c/Python${PY_VERSION_PATH}/Scripts:$PATH"
-      python -m pip install --upgrade pip wheel
+      choco install python${PY_VERSION};
+      export PATH="/c/Python${PY_VERSION_PATH}:/c/Python${PY_VERSION_PATH}/Scripts:$PATH";
+      python -m pip install --upgrade pip wheel;
     fi
   - pip install "coverage>=3.6" "nose>=1.3.0" "flake8>=2.1" "coveralls>=0.3" "mock>=2.0.0" "psutil>=5.4.8"
   - pip install -e .
