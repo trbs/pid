@@ -3,6 +3,9 @@ language: python
 # Explicitly specifying default OS for clarity
 os: linux
 
+# https://github.com/travis-ci/travis-ci/issues/9831
+dist: xenial
+
 python:
   - 2.7
   - 3.4
@@ -10,6 +13,7 @@ python:
   - 3.6
   - pypy2.7-6.0
   - pypy3.5-6.0
+  - 3.7
 
 before_install:
   - sudo chmod 0777 /var/run
@@ -20,7 +24,7 @@ matrix:
   include:
   - os: windows
     language: sh
-    python: "2.7"
+    python: 2.7
     before_install:
       - choco install python2
       - export PATH="/c/Python27:/c/Python27/Scripts:$PATH"
@@ -32,10 +36,6 @@ matrix:
       - choco install python3
       - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
       - python -m pip install --upgrade pip wheel
-  # Python 3.7 can be obtained from xenial
-  # https://github.com/travis-ci/travis-ci/issues/9831
-  - python: 3.7
-    dist: xenial
 
 install:
   - pip install "coverage>=3.6" "nose>=1.3.0" "flake8>=2.1" "coveralls>=0.3" "mock>=2.0.0" "psutil>=5.4.8"
