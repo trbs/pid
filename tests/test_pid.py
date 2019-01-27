@@ -68,20 +68,22 @@ def test_pid_context_manager():
 
 
 def test_pid_pid():
-    def check_pid_pid():
-        with pid.PidFile() as pidfile:
-            # On windows Python2.7 opens a file but reads an empty line from it
-            # Python3 throws IOError(13, Access denied) instead
-            if os.name == "nt" and sys.version_info.major < 3:
-                return
-            pidnr = int(open(pidfile.filename, "r").readline().strip())
-            assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
+    def read_pidfile_data():
+        return open(pidfile.filename, "r").readline().strip()
 
-    if os.name == "posix":
-        check_pid_pid()
-    else:
-        with raising_windows_io_error():
-            check_pid_pid()
+    with pid.PidFile() as pidfile:
+        if os.name == "posix":
+            pidnr = int(read_pidfile_data())
+            assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
+        else:
+            # On windows Python2 opens a file but reads an empty line from it
+            # Python3 throws IOError(13, Access denied) instead, which we are catching with raising_windows_io_error()
+            if sys.version_info.major < 3:
+                pidtext = read_pidfile_data()
+                assert pidtext == "", "Read '%s' from locked file on Windows with Python2" % (pidtext)
+            else:
+                with raising_windows_io_error():
+                    pidtext = read_pidfile_data()
 
 
 def test_pid_custom_name():
