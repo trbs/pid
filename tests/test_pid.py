@@ -276,7 +276,7 @@ def test_pid_check_samepid_two_processes():
             pidfile_proc1.create()
 
             mgetpid.return_value = 2
-            with raising(pid.PidFileAlreadyRunningError, pid.PidFileAlreadyLockedError):
+            with raising(pid.PidFileAlreadyRunningError):
                 pidfile_proc2.create()
     finally:
         pidfile_proc1.close()
