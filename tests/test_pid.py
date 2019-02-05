@@ -266,18 +266,22 @@ def test_pid_check_samepid():
         pidfile.close()
 
 
-def test_pid_raises_already_running_when_samepid_and_two_different_pids():
+@patch("os.getpid")
+@patch("os.kill")
+def test_pid_raises_already_running_when_samepid_and_two_different_pids(
+    mock_getpid, mock_kill,
+):
     pidfile_proc1 = pid.PidFile()
     pidfile_proc2 = pid.PidFile(allow_samepid=True)
 
     try:
-        with patch('pid.os.getpid') as mgetpid:
-            mgetpid.return_value = 1
-            pidfile_proc1.create()
+        mock_getpid.return_value = 1
+        pidfile_proc2.create()
 
-            mgetpid.return_value = 2
-            with raising(pid.PidFileAlreadyRunningError):
-                pidfile_proc2.create()
+        mock_getpid.return_value = 2
+        with raising(pid.PidFileAlreadyRunningError):
+            pidfile_proc2.create()
+
     finally:
         pidfile_proc1.close()
         pidfile_proc2.close()
