@@ -266,7 +266,7 @@ def test_pid_check_samepid():
         pidfile.close()
 
 
-def test_pid_check_samepid_two_processes():
+def test_pid_raises_already_running_when_samepid_and_two_different_pids():
     pidfile_proc1 = pid.PidFile()
     pidfile_proc2 = pid.PidFile(allow_samepid=True)
 
