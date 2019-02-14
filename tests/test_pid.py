@@ -46,37 +46,45 @@ def test_pid_class():
     pidfile = pid.PidFile()
     pidfile.create()
     pidfile.close()
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_context_manager():
-    with pid.PidFile():
+    with pid.PidFile() as pidfile:
         pass
+
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_pid():
     with pid.PidFile() as pidfile:
         pidnr = int(open(pidfile.filename, "r").readline().strip())
         assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_custom_name():
-    with pid.PidFile(pidname="testpidfile"):
+    with pid.PidFile(pidname="testpidfile") as pidfile:
         pass
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_enforce_dotpid_postfix():
     with pid.PidFile(pidname="testpidfile", enforce_dotpid_postfix=False) as pidfile:
         assert not pidfile.filename.endswith(".pid")
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_force_tmpdir():
-    with pid.PidFile(force_tmpdir=True):
+    with pid.PidFile(force_tmpdir=True) as pidfile:
         pass
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_custom_dir():
-    with pid.PidFile(piddir="/tmp/testpidfile.dir/"):
+    with pid.PidFile(piddir="/tmp/testpidfile.dir/") as pidfile:
         pass
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_no_term_signal():
@@ -84,8 +92,9 @@ def test_pid_no_term_signal():
         pass
 
     signal.signal(signal.SIGTERM, _noop)
-    with pid.PidFile(register_term_signal_handler=False):
+    with pid.PidFile(register_term_signal_handler=False) as pidfile:
         assert signal.getsignal(signal.SIGTERM) is _noop
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_term_signal():
@@ -93,8 +102,9 @@ def test_pid_term_signal():
         pass
 
     signal.signal(signal.SIGTERM, _noop)
-    with pid.PidFile(register_term_signal_handler=True):
+    with pid.PidFile(register_term_signal_handler=True) as pidfile:
         assert signal.getsignal(signal.SIGTERM) is not _noop
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_force_register_term_signal_handler():
@@ -106,8 +116,9 @@ def test_pid_force_register_term_signal_handler():
 
     signal.signal(signal.SIGTERM, _custom_signal_func)
     assert signal.getsignal(signal.SIGTERM) is _custom_signal_func
-    with pid.PidFile(register_term_signal_handler=True):
+    with pid.PidFile(register_term_signal_handler=True) as pidfile:
         assert signal.getsignal(signal.SIGTERM) is not _custom_signal_func
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_supply_term_signal_handler():
@@ -116,13 +127,15 @@ def test_pid_supply_term_signal_handler():
 
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
-    with pid.PidFile(register_term_signal_handler=_noop):
+    with pid.PidFile(register_term_signal_handler=_noop) as pidfile:
         assert signal.getsignal(signal.SIGTERM) is _noop
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_chmod():
-    with pid.PidFile(chmod=0o600):
+    with pid.PidFile(chmod=0o600) as pidfile:
         pass
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_already_locked():
@@ -192,6 +205,7 @@ def test_pid_already_closed():
         pidfile.fh.close()
     finally:
         pidfile.close()
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_multiplecreate():
@@ -202,12 +216,14 @@ def test_pid_multiplecreate():
             pidfile.create()
     finally:
         pidfile.close()
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_gid():
     gid = os.getgid()
-    with pid.PidFile(gid=gid):
+    with pid.PidFile(gid=gid) as pidfile:
         pass
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_check_const_empty():
@@ -219,6 +235,7 @@ def test_pid_check_const_empty():
         assert pidfile.check() == pid.PID_CHECK_EMPTY
     finally:
         pidfile.close()
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_check_const_nofile():
@@ -229,6 +246,7 @@ def test_pid_check_const_nofile():
 def test_pid_check_const_samepid():
     with pid.PidFile(allow_samepid=True) as pidfile:
         assert pidfile.check() == pid.PID_CHECK_SAMEPID
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_check_const_notrunning():
@@ -237,13 +255,15 @@ def test_pid_check_const_notrunning():
             # hope this does not clash
             f.write("999999999\n")
         assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_check_already_running():
-    with pid.PidFile():
+    with pid.PidFile() as pidfile:
         pidfile2 = pid.PidFile()
         with raising(pid.PidFileAlreadyRunningError):
             pidfile2.check()
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_check_samepid_with_blocks():
@@ -256,21 +276,24 @@ def test_pid_check_samepid_with_blocks():
         with pidfile:
             pass
 
+    assert not os.path.exists(pidfile.filename)
+
 
 def test_pid_check_samepid():
     pidfile = pid.PidFile(allow_samepid=True)
+
     try:
         pidfile.create()
         pidfile.create()
     finally:
         pidfile.close()
 
+    assert not os.path.exists(pidfile.filename)
+
 
 @patch("os.getpid")
 @patch("os.kill")
-def test_pid_raises_already_running_when_samepid_and_two_different_pids(
-    mock_getpid, mock_kill,
-):
+def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_getpid, mock_kill):
     pidfile_proc1 = pid.PidFile()
     pidfile_proc2 = pid.PidFile(allow_samepid=True)
 
@@ -286,19 +309,26 @@ def test_pid_raises_already_running_when_samepid_and_two_different_pids(
         pidfile_proc1.close()
         pidfile_proc2.close()
 
+    assert not os.path.exists(pidfile_proc1.filename)
+    assert not os.path.exists(pidfile_proc2.filename)
+
 
 def test_pid_default_term_signal():
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
-    with pid.PidFile():
+    with pid.PidFile() as pidfile:
         assert callable(signal.getsignal(signal.SIGTERM)) is True
+
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_ignore_term_signal():
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
-    with pid.PidFile():
+    with pid.PidFile() as pidfile:
         assert signal.getsignal(signal.SIGTERM) == signal.SIG_IGN
+
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_custom_term_signal():
@@ -307,8 +337,10 @@ def test_pid_custom_term_signal():
 
     signal.signal(signal.SIGTERM, _noop)
 
-    with pid.PidFile():
+    with pid.PidFile() as pidfile:
         assert signal.getsignal(signal.SIGTERM) == _noop
+
+    assert not os.path.exists(pidfile.filename)
 
 
 # def test_pid_unknown_term_signal():
