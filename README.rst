@@ -68,11 +68,11 @@ Behaviour
 
 Changes in version 2.0.0 and going forward:
 
-* pid is now friendly with daemon context managers such as 
+* pid is now friendly with daemon context managers such as
   `python-daemon <https://pypi.python.org/pypi/python-daemon/>`_ where
   the PidFile context manager is passed as a parameter. The
   new corrected behaviour will ensure the process environment is
-  determinde at the time of acquiring/checking the lock. Prior
+  determined at the time of acquiring/checking the lock. Prior
   behaviour would determine the process environment when
   instancing the class which may result in incorrect determination
   of the PID in the case of a process forking after instancing
