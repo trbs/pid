@@ -186,6 +186,7 @@ class PidFile(object):
         self.fh.write("%d\n" % self.pid)
         self.fh.flush()
         self.fh.seek(0)
+        self._already_removed = False
 
         if self.register_atexit and not self._is_setup:
             atexit.register(self.close)
