@@ -299,7 +299,7 @@ def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_get
 
     try:
         mock_getpid.return_value = 1
-        pidfile_proc2.create()
+        pidfile_proc1.create()
 
         mock_getpid.return_value = 2
         with raising(pid.PidFileAlreadyRunningError):
