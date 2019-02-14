@@ -349,3 +349,30 @@ def test_pid_custom_term_signal():
 #     #
 #     with pid.PidFile():
 #         assert signal.getsignal(signal.SIGTERM) == None
+
+
+def test_double_close_race_condition():
+    # https://github.com/trbs/pid/issues/22
+    pidfile1 = pid.PidFile()
+    pidfile2 = pid.PidFile()
+
+    try:
+        pidfile1.create()
+        assert os.path.exists(pidfile1.filename)
+    finally:
+        pidfile1.close()
+        assert not os.path.exists(pidfile1.filename)
+
+    try:
+        pidfile2.create()
+        assert os.path.exists(pidfile2.filename)
+
+        # simulate calling atexit in process of pidfile1
+        pidfile1.close()
+
+        assert os.path.exists(pidfile2.filename)
+    finally:
+        pidfile2.close()
+
+    assert not os.path.exists(pidfile1.filename)
+    assert not os.path.exists(pidfile2.filename)

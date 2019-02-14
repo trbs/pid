@@ -1,6 +1,13 @@
 Changelog
 =========
 
+2.2.3
+-----
+
+ - Fix double close race condition (#22)
+ - Add register_atexit parameter (default to True)
+
+
 2.2.2
 -----
 
