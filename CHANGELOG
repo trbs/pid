@@ -6,6 +6,7 @@ Changelog
 
  - Fix double close race condition (#22)
  - Add register_atexit parameter (default to True)
+ - Avoid registering atexit callback multiple times
 
 
 2.2.2

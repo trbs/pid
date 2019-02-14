@@ -187,7 +187,7 @@ class PidFile(object):
         self.fh.flush()
         self.fh.seek(0)
 
-        if self.register_atexit:
+        if self.register_atexit and not self._is_setup:
             atexit.register(self.close)
 
     def close(self, fh=None, cleanup=None):
