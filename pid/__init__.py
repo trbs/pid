@@ -8,7 +8,7 @@ import logging
 import tempfile
 
 
-__version__ = "2.2.2"
+__version__ = "2.2.3"
 
 DEFAULT_PID_DIR = "/var/run/"
 PID_CHECK_EMPTY = "PID_CHECK_EMPTY"
