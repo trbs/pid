@@ -2,7 +2,10 @@ import os
 import os.path
 import signal
 from contextlib import contextmanager
-from mock import patch
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 import pid
 
