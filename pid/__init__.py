@@ -34,10 +34,12 @@ class PidFileAlreadyLockedError(PidFileError):
 
 
 class PidFile(object):
-    __slots__ = ("pid", "pidname", "piddir", "enforce_dotpid_postfix",
-                 "register_term_signal_handler", "register_atexit", "filename",
-                 "fh", "lock_pidfile", "chmod", "uid", "gid", "force_tmpdir",
-                 "allow_samepid", "_logger", "_is_setup", "_already_removed")
+    __slots__ = (
+        "pid", "pidname", "piddir", "enforce_dotpid_postfix",
+        "register_term_signal_handler", "register_atexit", "filename",
+        "fh", "lock_pidfile", "chmod", "uid", "gid", "force_tmpdir",
+        "allow_samepid", "_logger", "_is_setup", "_already_removed",
+    )
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
                  register_term_signal_handler='auto', register_atexit=True,
@@ -77,6 +79,9 @@ class PidFile(object):
                 self.pid = os.getpid()
                 self.filename = self._make_filename()
                 self._register_term_signal()
+
+            if self.register_atexit:
+                atexit.register(self.close)
 
             # setup should only be performed once
             self._is_setup = True
@@ -187,9 +192,6 @@ class PidFile(object):
         self.fh.flush()
         self.fh.seek(0)
         self._already_removed = False
-
-        if self.register_atexit and not self._is_setup:
-            atexit.register(self.close)
 
     def close(self, fh=None, cleanup=None):
         self.logger.debug("%r closing pidfile: %s", self, self.filename)

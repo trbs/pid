@@ -379,3 +379,15 @@ def test_double_close_race_condition():
 
     assert not os.path.exists(pidfile1.filename)
     assert not os.path.exists(pidfile2.filename)
+
+
+@patch('atexit.register', autospec=True)
+def test_register_atexit_false(mock_atexit_register):
+    with pid.PidFile(register_atexit=False):
+        mock_atexit_register.assert_not_called()
+
+
+@patch('atexit.register', autospec=True)
+def test_register_atexit_true(mock_atexit_register):
+    with pid.PidFile(register_atexit=True) as pidfile:
+        mock_atexit_register.assert_called_once_with(pidfile.close)
