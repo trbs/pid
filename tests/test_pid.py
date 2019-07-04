@@ -1,6 +1,8 @@
 import os
 import os.path
+import sys
 import signal
+import pytest
 from contextlib import contextmanager
 try:
     from unittest.mock import patch
@@ -381,6 +383,7 @@ def test_double_close_race_condition():
     assert not os.path.exists(pidfile2.filename)
 
 
+@pytest.mark.skipif(sys.version_info < (3, 5), reason="requires python3.5 or higher")
 @patch('atexit.register', autospec=True)
 def test_register_atexit_false(mock_atexit_register):
     with pid.PidFile(register_atexit=False):
