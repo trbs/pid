@@ -1,6 +1,13 @@
 Changelog
 =========
 
+2.2.4
+-----
+
+ - Fix atexit registration which was never done
+ - Using standard mock library for tests if available
+
+
 2.2.3
 -----
 
