@@ -9,6 +9,12 @@ try:
 except ImportError:
     from mock import patch
 
+try:
+    from subprocess import run
+except ImportError:
+    # python2 support
+    from subprocess import call as run
+
 import pid
 
 pid.DEFAULT_PID_DIR = "/tmp"
@@ -160,6 +166,16 @@ def test_pid_already_locked_custom_name():
         assert os.path.exists(_pid.filename)
     assert not os.path.exists(_pid.filename)
 
+def test_pid_already_locked_multi_process():
+    with pid.PidFile() as _pid:
+        s = '''
+import pid
+with pid.PidFile("pytest", piddir="/tmp"):
+    pass
+'''
+        run(['python', '-c', s])
+        assert os.path.exists(_pid.filename)
+    assert not os.path.exists(_pid.filename)
 
 def test_pid_already_running():
     with pid.PidFile(lock_pidfile=False) as _pid:
