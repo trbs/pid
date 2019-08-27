@@ -175,7 +175,8 @@ with pid.PidFile("pytest", piddir="/tmp"):
     pass
 '''
         result = run(['python', '-c', s])
-        assert result.returncode == 1
+        returncode = result if isinstance(result, int) else result.returncode
+        assert returncode == 1
         assert os.path.exists(_pid.filename)
     assert not os.path.exists(_pid.filename)
 
@@ -189,7 +190,8 @@ with pid.PidFile("pytest2", piddir="/tmp") as _pid:
 assert not os.path.exists(_pid.filename)
 '''
         result = run(['python', '-c', s])
-        assert result.returncode == 0
+        returncode = result if isinstance(result, int) else result.returncode
+        assert returncode == 0
         assert os.path.exists(_pid.filename)
     assert not os.path.exists(_pid.filename)
 
