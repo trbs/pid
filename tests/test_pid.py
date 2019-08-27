@@ -166,6 +166,7 @@ def test_pid_already_locked_custom_name():
         assert os.path.exists(_pid.filename)
     assert not os.path.exists(_pid.filename)
 
+
 def test_pid_already_locked_multi_process():
     with pid.PidFile() as _pid:
         s = '''
@@ -176,6 +177,7 @@ with pid.PidFile("pytest", piddir="/tmp"):
         run(['python', '-c', s])
         assert os.path.exists(_pid.filename)
     assert not os.path.exists(_pid.filename)
+
 
 def test_pid_already_running():
     with pid.PidFile(lock_pidfile=False) as _pid:
