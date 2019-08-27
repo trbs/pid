@@ -161,8 +161,8 @@ class PidFile(object):
                 with open(self.filename, "r") as fh:
                     return inner_check(fh)
             return PID_CHECK_NOFILE
-        else:
-            return inner_check(self.fh)
+
+        return inner_check(self.fh)
 
     def create(self):
         self.setup()
