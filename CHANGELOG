@@ -1,6 +1,16 @@
 Changelog
 =========
 
+2.2.5
+-----
+
+ - Fix pidfile being removed by second process after failing to obtain the lock
+   This has side-effect that now automatic cleanup will not happen anymore if
+   `PidFile.create(...)` method did not finish properly. If you manually create
+   pidfiles you need to use `PidFile.close(cleanup=True)` or set the variable
+   `PidFile._need_cleanup = True` by hand.
+
+
 2.2.4
 -----
 

@@ -174,7 +174,22 @@ import pid
 with pid.PidFile("pytest", piddir="/tmp"):
     pass
 '''
-        run(['python', '-c', s])
+        result = run(['python', '-c', s])
+        assert result.returncode == 1
+        assert os.path.exists(_pid.filename)
+    assert not os.path.exists(_pid.filename)
+
+
+def test_pid_two_locks_multi_process():
+    with pid.PidFile() as _pid:
+        s = '''
+import os, pid
+with pid.PidFile("pytest2", piddir="/tmp") as _pid:
+    assert os.path.exists(_pid.filename)
+assert not os.path.exists(_pid.filename)
+'''
+        result = run(['python', '-c', s])
+        assert result.returncode == 0
         assert os.path.exists(_pid.filename)
     assert not os.path.exists(_pid.filename)
 
@@ -257,7 +272,7 @@ def test_pid_check_const_empty():
             f.write("\n")
         assert pidfile.check() == pid.PID_CHECK_EMPTY
     finally:
-        pidfile.close()
+        pidfile.close(cleanup=True)
     assert not os.path.exists(pidfile.filename)
 
 

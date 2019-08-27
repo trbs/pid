@@ -38,7 +38,7 @@ class PidFile(object):
         "pid", "pidname", "piddir", "enforce_dotpid_postfix",
         "register_term_signal_handler", "register_atexit", "filename",
         "fh", "lock_pidfile", "chmod", "uid", "gid", "force_tmpdir",
-        "allow_samepid", "_logger", "_is_setup", "_already_removed",
+        "allow_samepid", "_logger", "_is_setup", "_need_cleanup",
     )
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
@@ -63,7 +63,7 @@ class PidFile(object):
 
         self._logger = None
         self._is_setup = False
-        self._already_removed = False
+        self._need_cleanup = False
 
     @property
     def logger(self):
@@ -191,12 +191,11 @@ class PidFile(object):
         self.fh.write("%d\n" % self.pid)
         self.fh.flush()
         self.fh.seek(0)
-        self._already_removed = False
+        self._need_cleanup = True
 
     def close(self, fh=None, cleanup=None):
         self.logger.debug("%r closing pidfile: %s", self, self.filename)
-        if cleanup is None:
-            cleanup = False if self._already_removed else True
+        cleanup = self._need_cleanup if cleanup is None else cleanup
 
         if not fh:
             fh = self.fh
@@ -211,7 +210,7 @@ class PidFile(object):
         finally:
             if self.filename and os.path.isfile(self.filename) and cleanup:
                 os.remove(self.filename)
-                self._already_removed = True
+                self._need_cleanup = False
 
     def __enter__(self):
         self.create()
