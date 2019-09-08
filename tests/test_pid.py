@@ -171,10 +171,10 @@ def test_pid_already_locked_multi_process():
     with pid.PidFile() as _pid:
         s = '''
 import pid
-with pid.PidFile("pytest", piddir="/tmp"):
+with pid.PidFile(os.path.basename(sys.argv[0]), piddir="/tmp"):
     pass
 '''
-        result = run(['python', '-c', s])
+        result = run([sys.executable, '-c', s])
         returncode = result if isinstance(result, int) else result.returncode
         assert returncode == 1
         assert os.path.exists(_pid.filename)
@@ -189,7 +189,7 @@ with pid.PidFile("pytest2", piddir="/tmp") as _pid:
     assert os.path.exists(_pid.filename)
 assert not os.path.exists(_pid.filename)
 '''
-        result = run(['python', '-c', s])
+        result = run([sys.executable, '-c', s])
         returncode = result if isinstance(result, int) else result.returncode
         assert returncode == 0
         assert os.path.exists(_pid.filename)
