@@ -171,7 +171,7 @@ def test_pid_already_locked_multi_process():
     with pid.PidFile() as _pid:
         s = '''
 import pid
-with pid.PidFile("pytest", piddir="/tmp"):
+with pid.PidFile(os.path.basename(sys.argv[0]), piddir="/tmp"):
     pass
 '''
         result = run(['python', '-c', s])
