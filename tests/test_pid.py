@@ -379,6 +379,8 @@ def test_pid_check_samepid_with_blocks():
         with raising(pid.SamePidFileNotSupported):
             check_samepid_with_blocks_same_objects()
 
+    assert not os.path.exists(pidfile.filename)
+
 
 def test_pid_check_samepid():
     def check_samepid():
@@ -425,6 +427,9 @@ def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_get
     else:
         with raising(pid.SamePidFileNotSupported):
             check_samepid_and_two_different_pids()
+
+    assert not os.path.exists(pidfile_proc1.filename)
+    assert not os.path.exists(pidfile_proc2.filename)
 
 
 def test_pid_default_term_signal():
