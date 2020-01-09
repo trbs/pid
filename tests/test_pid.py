@@ -18,6 +18,7 @@ except ImportError:
 
 import pid
 
+# Fix backslashes on windows to properly execute "run" command
 pid.DEFAULT_PID_DIR = tempfile.gettempdir().replace("\\", "/")
 
 
