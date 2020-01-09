@@ -2,6 +2,7 @@ import os
 import os.path
 import sys
 import signal
+import tempfile
 import pytest
 from contextlib import contextmanager
 try:
@@ -17,7 +18,7 @@ except ImportError:
 
 import pid
 
-pid.DEFAULT_PID_DIR = "/tmp"
+pid.DEFAULT_PID_DIR = tempfile.gettempdir().replace("\\", "/")
 
 
 # https://code.google.com/p/python-nose/issues/detail?id=175
@@ -119,7 +120,7 @@ def test_pid_force_tmpdir():
 
 
 def test_pid_custom_dir():
-    with pid.PidFile(piddir="/tmp/testpidfile.dir/") as pidfile:
+    with pid.PidFile(piddir="%s/testpidfile.dir/" % pid.DEFAULT_PID_DIR) as pidfile:
         pass
     assert not os.path.exists(pidfile.filename)
 
@@ -196,10 +197,13 @@ def test_pid_already_locked_custom_name():
 def test_pid_already_locked_multi_process():
     with pid.PidFile() as _pid:
         s = '''
-import pid
-with pid.PidFile(os.path.basename(sys.argv[0]), piddir="/tmp"):
-    pass
-'''
+import pid, sys
+try:
+    with pid.PidFile("%s", piddir="%s"):
+        pass
+except pid.PidFileAlreadyLockedError:
+    sys.exit(1)
+''' % (os.path.basename(sys.argv[0]), pid.DEFAULT_PID_DIR)
         result = run([sys.executable, '-c', s])
         returncode = result if isinstance(result, int) else result.returncode
         assert returncode == 1
@@ -211,10 +215,10 @@ def test_pid_two_locks_multi_process():
     with pid.PidFile() as _pid:
         s = '''
 import os, pid
-with pid.PidFile("pytest2", piddir="/tmp") as _pid:
+with pid.PidFile("pytest2", piddir="%s") as _pid:
     assert os.path.exists(_pid.filename)
 assert not os.path.exists(_pid.filename)
-'''
+''' % pid.DEFAULT_PID_DIR
         result = run([sys.executable, '-c', s])
         returncode = result if isinstance(result, int) else result.returncode
         assert returncode == 0
@@ -315,7 +319,7 @@ def test_pid_check_const_samepid():
     def check_const_samepid():
         with pid.PidFile(allow_samepid=True) as pidfile:
             assert pidfile.check() == pid.PID_CHECK_SAMEPID
-    assert not os.path.exists(pidfile.filename)
+        assert not os.path.exists(pidfile.filename)
 
     if os.name == "posix":
         check_const_samepid()
@@ -394,14 +398,12 @@ def test_pid_check_samepid():
             check_samepid()
 
 
-
 @patch("os.getpid")
 @patch("os.kill")
 def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_getpid, mock_kill):
     def check_samepid_and_two_different_pids():
         pidfile_proc1 = pid.PidFile()
         pidfile_proc2 = pid.PidFile(allow_samepid=True)
-
 
         try:
             mock_getpid.return_value = 1
