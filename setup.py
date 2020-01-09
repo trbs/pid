@@ -52,8 +52,7 @@ setup(
     ],
     keywords='pid pidfile context manager decorator',
     packages=["pid"],
-    install_requires=[],
+    install_requires=['psutil>=5.4.8 ; sys_platform == "win32"'],
     test_suite='nose.collector',
-    setup_requires=['psutil>=5.4.8'],
     tests_require=['nose>=1.0'],
 )

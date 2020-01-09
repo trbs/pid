@@ -1,6 +1,39 @@
 Changelog
 =========
 
+2.2.5
+-----
+
+ - Fix pidfile being removed by second process after failing to obtain the lock
+   This has side-effect that now automatic cleanup will not happen anymore if
+   `PidFile.create(...)` method did not finish properly. If you manually create
+   pidfiles you need to use `PidFile.close(cleanup=True)` or set the variable
+   `PidFile._need_cleanup = True` by hand.
+
+
+2.2.4
+-----
+
+ - Fix atexit registration which was never done
+ - Using standard mock library for tests if available
+
+
+2.2.3
+-----
+
+ - Fix double close race condition (#22)
+ - Add register_atexit parameter (default to True)
+ - Avoid registering atexit callback multiple times
+
+
+2.2.2
+-----
+
+ - PR #21 improve test for container style environment like
+   FreeBSD jails / docker containers / etc which do not expose or allow
+   `os.kill` for the test pids.
+
+
 2.2.1
 -----
 

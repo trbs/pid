@@ -9,13 +9,13 @@ matrix:
   - python: 3.4
   - python: 3.5
   - python: 3.6
+  - python: 3.7
+  - python: 3.8
   # Xenial is required for PyPy and 3.7 builds
   # https://github.com/travis-ci/travis-ci/issues/9831
   - python: pypy2.7-6.0
     dist: xenial
   - python: pypy3.5-6.0
-    dist: xenial
-  - python: 3.7
     dist: xenial
 
   # Python is not natively supported in windows yet, have to install it through shell script
@@ -40,6 +40,11 @@ matrix:
     python: 3.7
     env:
       - PY_VERSION_BASE=3 PY_VERSION=3.7.2 PY_VERSION_PATH=37
+  - os: windows
+    language: sh
+    python: 3.8
+    env:
+      - PY_VERSION_BASE=3 PY_VERSION=3.8.1 PY_VERSION_PATH=38
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -53,13 +58,14 @@ install:
       export PATH="/c/Python${PY_VERSION_PATH}:/c/Python${PY_VERSION_PATH}/Scripts:$PATH";
       python -m pip install --upgrade pip wheel;
     fi
-  - pip install "coverage>=3.6" "nose>=1.3.0" "flake8>=2.1" "coveralls>=0.3" "mock>=2.0.0" "psutil>=5.4.8"
+  - pip install flake8 pytest pytest-cov
+  - dpkg --compare-versions $TRAVIS_PYTHON_VERSION ge 3.3 || pip install "mock>=2.0.0"
   - pip install -e .
 
 script:
   - echo $TRAVIS_PYTHON_VERSION
-  - flake8 -v --show-source --ignore=E501,W391 .
-  - nosetests -v --with-coverage --cover-package=pid
+  - flake8 --show-source --ignore=E501,W391 .
+  - PYTHONPATH=. pytest -v -x --cov=pid
 
 after_success:
   - coveralls
