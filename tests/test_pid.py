@@ -290,13 +290,12 @@ def test_pid_multiplecreate():
     assert not os.path.exists(pidfile.filename)
 
 
+@pytest.mark.skipif(os.name == "nt", reason="os.getgid() does not exist on windows")
 def test_pid_gid():
-    # os.getgid() does not exist on windows
-    if os.name == "posix":
-        gid = os.getgid()
-        with pid.PidFile(gid=gid) as pidfile:
-            pass
-        assert not os.path.exists(pidfile.filename)
+    gid = os.getgid()
+    with pid.PidFile(gid=gid) as pidfile:
+        pass
+    assert not os.path.exists(pidfile.filename)
 
 
 def test_pid_check_const_empty():
@@ -401,8 +400,7 @@ def test_pid_check_samepid():
 
 
 @patch("os.getpid")
-@patch("os.kill")
-def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_getpid, mock_kill):
+def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_getpid):
     def check_samepid_and_two_different_pids():
         pidfile_proc1 = pid.PidFile()
         pidfile_proc2 = pid.PidFile(allow_samepid=True)
