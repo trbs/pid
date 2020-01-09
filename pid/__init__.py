@@ -5,7 +5,6 @@ import atexit
 import signal
 import logging
 import tempfile
-import psutil
 
 
 __version__ = "2.2.5"
@@ -61,7 +60,7 @@ class PidFile(object):
         self.force_tmpdir = force_tmpdir
 
         self.allow_samepid = allow_samepid
-        if os.name != "posix" and self.allow_samepid:
+        if sys.platform == 'win32' and self.allow_samepid:
             raise SamePidFileNotSupported("Flag allow_samepid is not supported on non-POSIX systems")
 
         self.fh = None
@@ -148,11 +147,26 @@ class PidFile(object):
                 if self.allow_samepid and self.pid == pid:
                     return PID_CHECK_SAMEPID
 
-            if psutil.pid_exists(pid):
+            if sys.platform != 'win32':
+                try:
+                    os.kill(pid, 0)
+                except OSError as exc:
+                    if exc.errno == errno.ESRCH:
+                        # this pid is not running
+                        return PID_CHECK_NOTRUNNING
+                    self.close(fh=fh, cleanup=False)
+                    raise PidFileAlreadyRunningError(exc)
                 self.close(fh=fh, cleanup=False)
                 raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
+
             else:
-                return PID_CHECK_NOTRUNNING
+                # Using psutil library for windows
+                import psutil
+                if psutil.pid_exists(pid):
+                    self.close(fh=fh, cleanup=False)
+                    raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
+                else:
+                    return PID_CHECK_NOTRUNNING
 
         self.setup()
 
@@ -162,7 +176,7 @@ class PidFile(object):
             if self.filename and os.path.isfile(self.filename):
                 with open(self.filename, "r") as fh:
                     # Try to read from file to check if it is locked by the same process
-                    if os.name == "nt":
+                    if sys.platform == 'win32':
                         try:
                             fh.seek(0)
                             fh.read(1)
@@ -183,10 +197,10 @@ class PidFile(object):
         self.fh = open(self.filename, 'a+')
         if self.lock_pidfile:
             try:
-                if os.name == "posix":
+                if sys.platform != 'win32':
                     import fcntl
                     fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                elif os.name == "nt":
+                else:
                     import msvcrt
                     msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
                     # Try to read from file to check if it is actually locked
@@ -201,7 +215,7 @@ class PidFile(object):
         if check_result == PID_CHECK_SAMEPID:
             return
 
-        if os.name == "posix":
+        if sys.platform != 'win32':
             if self.chmod:
                 os.fchmod(self.fh.fileno(), self.chmod)
             if self.uid >= 0 or self.gid >= 0:

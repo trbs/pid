@@ -87,7 +87,7 @@ def test_pid_pid():
         return open(pidfile.filename, "r").readline().strip()
 
     with pid.PidFile() as pidfile:
-        if os.name == "posix":
+        if sys.platform != 'win32':
             pidnr = int(read_pidfile_data())
             assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
         else:
@@ -290,7 +290,7 @@ def test_pid_multiplecreate():
     assert not os.path.exists(pidfile.filename)
 
 
-@pytest.mark.skipif(os.name == "nt", reason="os.getgid() does not exist on windows")
+@pytest.mark.skipif(sys.platform == 'win32', reason="os.getgid() does not exist on windows")
 def test_pid_gid():
     gid = os.getgid()
     with pid.PidFile(gid=gid) as pidfile:
@@ -321,7 +321,7 @@ def test_pid_check_const_samepid():
             assert pidfile.check() == pid.PID_CHECK_SAMEPID
         assert not os.path.exists(pidfile.filename)
 
-    if os.name == "posix":
+    if sys.platform != 'win32':
         check_const_samepid()
     else:
         with raising(pid.SamePidFileNotSupported):
@@ -338,7 +338,7 @@ def test_pid_check_const_notrunning():
                 assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
         assert not os.path.exists(pidfile.filename)
 
-    if os.name == "posix":
+    if sys.platform != 'win32':
         check_const_notrunning()
     else:
         with raising_windows_io_error():
@@ -367,13 +367,13 @@ def test_pid_check_samepid_with_blocks():
 
         assert not os.path.exists(pidfile.filename)
 
-    if os.name == "posix":
+    if sys.platform != 'win32':
         check_samepid_with_blocks_separate_objects()
     else:
         with raising(pid.SamePidFileNotSupported):
             check_samepid_with_blocks_separate_objects()
 
-    if os.name == "posix":
+    if sys.platform != 'win32':
         check_samepid_with_blocks_same_objects()
     else:
         with raising(pid.SamePidFileNotSupported):
@@ -392,7 +392,7 @@ def test_pid_check_samepid():
 
         assert not os.path.exists(pidfile.filename)
 
-    if os.name == "posix":
+    if sys.platform != 'win32':
         check_samepid()
     else:
         with raising(pid.SamePidFileNotSupported):
@@ -420,7 +420,7 @@ def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_get
         assert not os.path.exists(pidfile_proc1.filename)
         assert not os.path.exists(pidfile_proc2.filename)
 
-    if os.name == "posix":
+    if sys.platform != 'win32':
         check_samepid_and_two_different_pids()
     else:
         with raising(pid.SamePidFileNotSupported):
