@@ -54,6 +54,6 @@ setup(
     packages=["pid"],
     install_requires=[],
     test_suite='nose.collector',
-    setup_requires=['psutil>=5.4.8'],
+    install_requires=['psutil>=5.4.8 : sys.platform == "win32"'],
     tests_require=['nose>=1.0'],
 )

@@ -53,7 +53,6 @@ install:
       export PATH="/c/Python${PY_VERSION_PATH}:/c/Python${PY_VERSION_PATH}/Scripts:$PATH";
       python -m pip install --upgrade pip wheel;
     fi
-  - pip install "psutil>=5.4.8"
   - pip install flake8 pytest pytest-cov
   - dpkg --compare-versions $TRAVIS_PYTHON_VERSION ge 3.3 || pip install "mock>=2.0.0"
   - pip install -e .
