@@ -11,12 +11,8 @@ matrix:
   - python: 3.6
   - python: 3.7
   - python: 3.8
-  # Xenial is required for PyPy and 3.7 builds
-  # https://github.com/travis-ci/travis-ci/issues/9831
   - python: pypy2.7-6.0
-    dist: xenial
   - python: pypy3.5-6.0
-    dist: xenial
 
   # Python is not natively supported in windows yet, have to install it through shell script
   # https://github.com/WeblateOrg/translation-finder/blob/master/.travis.yml#L20-L33
