@@ -8,7 +8,7 @@ import tempfile
 import psutil
 
 
-__version__ = "2.2.1"
+__version__ = "2.2.5"
 
 DEFAULT_PID_DIR = "/var/run/"
 PID_CHECK_EMPTY = "PID_CHECK_EMPTY"
@@ -38,17 +38,22 @@ class SamePidFileNotSupported(PidFileError):
 
 
 class PidFile(object):
-    __slots__ = ("pid", "pidname", "piddir", "enforce_dotpid_postfix", "register_term_signal_handler",
-                 "filename", "fh", "lock_pidfile", "chmod", "uid", "gid", "force_tmpdir",
-                 "allow_samepid", "_logger", "_is_setup")
+    __slots__ = (
+        "pid", "pidname", "piddir", "enforce_dotpid_postfix",
+        "register_term_signal_handler", "register_atexit", "filename",
+        "fh", "lock_pidfile", "chmod", "uid", "gid", "force_tmpdir",
+        "allow_samepid", "_logger", "_is_setup", "_need_cleanup",
+    )
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
-                 register_term_signal_handler='auto', lock_pidfile=True, chmod=0o644,
-                 uid=-1, gid=-1, force_tmpdir=False, allow_samepid=False):
+                 register_term_signal_handler='auto', register_atexit=True,
+                 lock_pidfile=True, chmod=0o644, uid=-1, gid=-1, force_tmpdir=False,
+                 allow_samepid=False):
         self.pidname = pidname
         self.piddir = piddir
         self.enforce_dotpid_postfix = enforce_dotpid_postfix
         self.register_term_signal_handler = register_term_signal_handler
+        self.register_atexit = register_atexit
         self.lock_pidfile = lock_pidfile
         self.chmod = chmod
         self.uid = uid
@@ -65,6 +70,7 @@ class PidFile(object):
 
         self._logger = None
         self._is_setup = False
+        self._need_cleanup = False
 
     @property
     def logger(self):
@@ -80,6 +86,9 @@ class PidFile(object):
                 self.pid = os.getpid()
                 self.filename = self._make_filename()
                 self._register_term_signal()
+
+            if self.register_atexit:
+                atexit.register(self.close)
 
             # setup should only be performed once
             self._is_setup = True
@@ -164,8 +173,8 @@ class PidFile(object):
                                 raise
                     return inner_check(fh)
             return PID_CHECK_NOFILE
-        else:
-            return inner_check(self.fh)
+
+        return inner_check(self.fh)
 
     def create(self):
         self.setup()
@@ -199,14 +208,15 @@ class PidFile(object):
                 os.fchown(self.fh.fileno(), self.uid, self.gid)
         self.fh.seek(0)
         self.fh.truncate()
-        # pidfile must consist of the pid and a newline character
+        # pidfile must be composed of the pid number and a newline character
         self.fh.write("%d\n" % self.pid)
         self.fh.flush()
         self.fh.seek(0)
-        atexit.register(self.close)
+        self._need_cleanup = True
 
-    def close(self, fh=None, cleanup=True):
+    def close(self, fh=None, cleanup=None):
         self.logger.debug("%r closing pidfile: %s", self, self.filename)
+        cleanup = self._need_cleanup if cleanup is None else cleanup
 
         if not fh:
             fh = self.fh
@@ -221,6 +231,7 @@ class PidFile(object):
         finally:
             if self.filename and os.path.isfile(self.filename) and cleanup:
                 os.remove(self.filename)
+                self._need_cleanup = False
 
     def __enter__(self):
         self.create()

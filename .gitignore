@@ -2,9 +2,12 @@
 *.pyo
 *.egg
 .coverage
+.eggs
+.tox
 pid.egg-info/
 build/
 dist/
 .idea
 .eggs
 venv
+venv2
