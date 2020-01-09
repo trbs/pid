@@ -380,6 +380,7 @@ def test_pid_check_samepid_with_blocks():
         with raising(pid.SamePidFileNotSupported):
             check_samepid_with_blocks_same_objects()
 
+
 def test_pid_check_samepid():
     def check_samepid():
         pidfile = pid.PidFile(allow_samepid=True)
