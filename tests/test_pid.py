@@ -427,13 +427,13 @@ def test_double_close_race_condition():
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5), reason="requires python3.5 or higher")
-@patch('atexit.register', autospec=True)
+@patch("atexit.register", autospec=True)
 def test_register_atexit_false(mock_atexit_register):
     with pid.PidFile(register_atexit=False):
         mock_atexit_register.assert_not_called()
 
 
-@patch('atexit.register', autospec=True)
+@patch("atexit.register", autospec=True)
 def test_register_atexit_true(mock_atexit_register):
     with pid.PidFile(register_atexit=True) as pidfile:
         mock_atexit_register.assert_called_once_with(pidfile.close)

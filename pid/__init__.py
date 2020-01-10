@@ -42,7 +42,7 @@ class PidFile(object):
     )
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
-                 register_term_signal_handler='auto', register_atexit=True,
+                 register_term_signal_handler="auto", register_atexit=True,
                  lock_pidfile=True, chmod=0o644, uid=-1, gid=-1, force_tmpdir=False,
                  allow_samepid=False):
         self.pidname = pidname
@@ -111,7 +111,7 @@ class PidFile(object):
 
     def _register_term_signal(self):
         register_term_signal_handler = self.register_term_signal_handler
-        if register_term_signal_handler == 'auto':
+        if register_term_signal_handler == "auto":
             if signal.getsignal(signal.SIGTERM) == signal.SIG_DFL:
                 register_term_signal_handler = True
             else:
@@ -168,7 +168,7 @@ class PidFile(object):
         self.setup()
 
         self.logger.debug("%r create pidfile: %s", self, self.filename)
-        self.fh = open(self.filename, 'a+')
+        self.fh = open(self.filename, "a+")
         if self.lock_pidfile:
             try:
                 fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
