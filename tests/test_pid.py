@@ -103,6 +103,13 @@ def test_pid_custom_dir():
     assert not os.path.exists(pidfile.filename)
 
 
+def test_pid_piddir_exists_as_file():
+    with tempfile.NamedTemporaryFile() as tmpfile:
+        with raising(IOError):
+            with pid.PidFile(piddir=tmpfile.name):
+                pass
+
+
 def test_pid_no_term_signal():
     def _noop(*args, **kwargs):
         pass

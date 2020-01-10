@@ -6,11 +6,12 @@ import atexit
 import signal
 import logging
 import tempfile
+from .utils import determine_pid_directory, effective_access
 
 
 __version__ = "2.2.5"
 
-DEFAULT_PID_DIR = "/var/run/"
+DEFAULT_PID_DIR = determine_pid_directory()
 PID_CHECK_EMPTY = "PID_CHECK_EMPTY"
 PID_CHECK_NOFILE = "PID_CHECK_NOFILE"
 PID_CHECK_SAMEPID = "PID_CHECK_SAMEPID"
@@ -99,11 +100,13 @@ class PidFile(object):
             else:
                 piddir = tempfile.gettempdir()
 
+        if os.path.exists(piddir) and not os.path.isdir(piddir):
+            raise IOError("Pid file directory '%s' exists but is not a directory" % piddir)
         if not os.path.isdir(piddir):
             os.makedirs(piddir)
-        if not os.access(piddir, os.R_OK):
+        if not effective_access(piddir, os.R_OK):
             raise IOError("Pid file directory '%s' cannot be read" % piddir)
-        if not os.access(piddir, os.W_OK):
+        if not effective_access(piddir, os.W_OK | os.X_OK):
             raise IOError("Pid file directory '%s' cannot be written to" % piddir)
 
         filename = os.path.abspath(os.path.join(piddir, pidname))
