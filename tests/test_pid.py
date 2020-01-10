@@ -98,7 +98,7 @@ def test_pid_force_tmpdir():
 
 
 def test_pid_custom_dir():
-    with pid.PidFile(piddir="/tmp/testpidfile.dir/") as pidfile:
+    with pid.PidFile(piddir=os.path.join(pid.DEFAULT_PID_DIR, "testpidfile.dir")) as pidfile:
         pass
     assert not os.path.exists(pidfile.filename)
 
