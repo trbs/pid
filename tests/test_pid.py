@@ -169,26 +169,29 @@ def test_pid_already_locked_custom_name():
 
 def test_pid_already_locked_multi_process():
     with pid.PidFile() as _pid:
-        s = '''
-import pid
-with pid.PidFile(os.path.basename(sys.argv[0]), piddir="/tmp"):
-    pass
-'''
+        s = """
+import sys, pid
+try:
+    with pid.PidFile("%s", piddir="%s"):
+        pass
+except pid.PidFileAlreadyLockedError:
+    sys.exit(123)
+""" % (os.path.basename(sys.argv[0]), pid.DEFAULT_PID_DIR)
         result = run([sys.executable, '-c', s])
         returncode = result if isinstance(result, int) else result.returncode
-        assert returncode == 1
+        assert returncode == 123
         assert os.path.exists(_pid.filename)
     assert not os.path.exists(_pid.filename)
 
 
 def test_pid_two_locks_multi_process():
     with pid.PidFile() as _pid:
-        s = '''
+        s = """
 import os, pid
-with pid.PidFile("pytest2", piddir="/tmp") as _pid:
+with pid.PidFile("pytest2", piddir="%s") as _pid:
     assert os.path.exists(_pid.filename)
 assert not os.path.exists(_pid.filename)
-'''
+""" % pid.DEFAULT_PID_DIR
         result = run([sys.executable, '-c', s])
         returncode = result if isinstance(result, int) else result.returncode
         assert returncode == 0
