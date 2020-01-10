@@ -6,7 +6,7 @@ import signal
 import logging
 import tempfile
 if sys.platform != "win32":
-    import fnctl
+    import fcntl
 else:
     import msvcrt
     # Using psutil library for windows instead of os.kill call
