@@ -87,7 +87,7 @@ def test_pid_pid():
         return open(pidfile.filename, "r").readline().strip()
 
     with pid.PidFile() as pidfile:
-        if sys.platform != 'win32':
+        if sys.platform != "win32":
             pidnr = int(read_pidfile_data())
             assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
         else:
@@ -205,7 +205,7 @@ try:
 except pid.PidFileAlreadyLockedError:
     sys.exit(1)
 ''' % (os.path.basename(sys.argv[0]), pid.DEFAULT_PID_DIR)
-        result = run([sys.executable, '-c', s])
+        result = run([sys.executable, "-c", s])
         returncode = result if isinstance(result, int) else result.returncode
         assert returncode == 1
         assert os.path.exists(_pid.filename)
@@ -220,7 +220,7 @@ with pid.PidFile("pytest2", piddir="%s") as _pid:
     assert os.path.exists(_pid.filename)
 assert not os.path.exists(_pid.filename)
 ''' % pid.DEFAULT_PID_DIR
-        result = run([sys.executable, '-c', s])
+        result = run([sys.executable, "-c", s])
         returncode = result if isinstance(result, int) else result.returncode
         assert returncode == 0
         assert os.path.exists(_pid.filename)
@@ -290,7 +290,7 @@ def test_pid_multiplecreate():
     assert not os.path.exists(pidfile.filename)
 
 
-@pytest.mark.skipif(sys.platform == 'win32', reason="os.getgid() does not exist on windows")
+@pytest.mark.skipif(sys.platform == "win32", reason="os.getgid() does not exist on windows")
 def test_pid_gid():
     gid = os.getgid()
     with pid.PidFile(gid=gid) as pidfile:
@@ -321,7 +321,7 @@ def test_pid_check_const_samepid():
             assert pidfile.check() == pid.PID_CHECK_SAMEPID
         assert not os.path.exists(pidfile.filename)
 
-    if sys.platform != 'win32':
+    if sys.platform != "win32":
         check_const_samepid()
     else:
         with raising(pid.SamePidFileNotSupported):
@@ -338,7 +338,7 @@ def test_pid_check_const_notrunning():
                 assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
         assert not os.path.exists(pidfile.filename)
 
-    if sys.platform != 'win32':
+    if sys.platform != "win32":
         check_const_notrunning()
     else:
         with raising_windows_io_error():
@@ -367,13 +367,13 @@ def test_pid_check_samepid_with_blocks():
 
         assert not os.path.exists(pidfile.filename)
 
-    if sys.platform != 'win32':
+    if sys.platform != "win32":
         check_samepid_with_blocks_separate_objects()
     else:
         with raising(pid.SamePidFileNotSupported):
             check_samepid_with_blocks_separate_objects()
 
-    if sys.platform != 'win32':
+    if sys.platform != "win32":
         check_samepid_with_blocks_same_objects()
     else:
         with raising(pid.SamePidFileNotSupported):
@@ -392,7 +392,7 @@ def test_pid_check_samepid():
 
         assert not os.path.exists(pidfile.filename)
 
-    if sys.platform != 'win32':
+    if sys.platform != "win32":
         check_samepid()
     else:
         with raising(pid.SamePidFileNotSupported):
@@ -420,7 +420,7 @@ def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_get
         assert not os.path.exists(pidfile_proc1.filename)
         assert not os.path.exists(pidfile_proc2.filename)
 
-    if sys.platform != 'win32':
+    if sys.platform != "win32":
         check_samepid_and_two_different_pids()
     else:
         with raising(pid.SamePidFileNotSupported):
@@ -493,13 +493,13 @@ def test_double_close_race_condition():
 
 
 @pytest.mark.skipif(sys.version_info < (3, 5), reason="requires python3.5 or higher")
-@patch('atexit.register', autospec=True)
+@patch("atexit.register", autospec=True)
 def test_register_atexit_false(mock_atexit_register):
     with pid.PidFile(register_atexit=False):
         mock_atexit_register.assert_not_called()
 
 
-@patch('atexit.register', autospec=True)
+@patch("atexit.register", autospec=True)
 def test_register_atexit_true(mock_atexit_register):
     with pid.PidFile(register_atexit=True) as pidfile:
         mock_atexit_register.assert_called_once_with(pidfile.close)

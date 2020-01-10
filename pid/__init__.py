@@ -52,7 +52,7 @@ class PidFile(object):
     )
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
-                 register_term_signal_handler='auto', register_atexit=True,
+                 register_term_signal_handler="auto", register_atexit=True,
                  lock_pidfile=True, chmod=0o644, uid=-1, gid=-1, force_tmpdir=False,
                  allow_samepid=False):
         self.pidname = pidname
@@ -67,7 +67,7 @@ class PidFile(object):
         self.force_tmpdir = force_tmpdir
 
         self.allow_samepid = allow_samepid
-        if sys.platform == 'win32' and self.allow_samepid:
+        if sys.platform == "win32" and self.allow_samepid:
             raise SamePidFileNotSupported("Flag allow_samepid is not supported on non-POSIX systems")
 
         self.fh = None
@@ -124,7 +124,7 @@ class PidFile(object):
 
     def _register_term_signal(self):
         register_term_signal_handler = self.register_term_signal_handler
-        if register_term_signal_handler == 'auto':
+        if register_term_signal_handler == "auto":
             if signal.getsignal(signal.SIGTERM) == signal.SIG_DFL:
                 register_term_signal_handler = True
             else:
@@ -154,7 +154,7 @@ class PidFile(object):
                 if self.allow_samepid and self.pid == pid:
                     return PID_CHECK_SAMEPID
 
-            if sys.platform != 'win32':
+            if sys.platform != "win32":
                 try:
                     os.kill(pid, 0)
                 except OSError as exc:
@@ -181,7 +181,7 @@ class PidFile(object):
             if self.filename and os.path.isfile(self.filename):
                 with open(self.filename, "r") as fh:
                     # Try to read from file to check if it is locked by the same process
-                    if sys.platform == 'win32':
+                    if sys.platform == "win32":
                         try:
                             fh.seek(0)
                             fh.read(1)
@@ -199,10 +199,10 @@ class PidFile(object):
         self.setup()
 
         self.logger.debug("%r create pidfile: %s", self, self.filename)
-        self.fh = open(self.filename, 'a+')
+        self.fh = open(self.filename, "a+")
         if self.lock_pidfile:
             try:
-                if sys.platform != 'win32':
+                if sys.platform != "win32":
                     fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 else:
                     msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
@@ -218,7 +218,7 @@ class PidFile(object):
         if check_result == PID_CHECK_SAMEPID:
             return
 
-        if sys.platform != 'win32':
+        if sys.platform != "win32":
             if self.chmod:
                 os.fchmod(self.fh.fileno(), self.chmod)
             if self.uid >= 0 or self.gid >= 0:
