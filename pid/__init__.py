@@ -5,11 +5,18 @@ import atexit
 import signal
 import logging
 import tempfile
+if sys.platform != "win32":
+    import fnctl
+else:
+    import msvcrt
+    # Using psutil library for windows instead of os.kill call
+    import psutil
 
 
 __version__ = "2.2.5"
 
-DEFAULT_PID_DIR = "/var/run/"
+
+DEFAULT_PID_DIR = tempfile.gettempdir() if sys.platform == "win32" else "/var/run/"
 PID_CHECK_EMPTY = "PID_CHECK_EMPTY"
 PID_CHECK_NOFILE = "PID_CHECK_NOFILE"
 PID_CHECK_SAMEPID = "PID_CHECK_SAMEPID"
@@ -160,8 +167,6 @@ class PidFile(object):
                 raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
 
             else:
-                # Using psutil library for windows
-                import psutil
                 if psutil.pid_exists(pid):
                     self.close(fh=fh, cleanup=False)
                     raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
@@ -198,10 +203,8 @@ class PidFile(object):
         if self.lock_pidfile:
             try:
                 if sys.platform != 'win32':
-                    import fcntl
                     fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                 else:
-                    import msvcrt
                     msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
                     # Try to read from file to check if it is actually locked
                     self.fh.seek(0)
