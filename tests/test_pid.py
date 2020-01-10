@@ -2,6 +2,7 @@ import os
 import os.path
 import sys
 import signal
+import tempfile
 import pytest
 from contextlib import contextmanager
 try:
@@ -17,7 +18,11 @@ except ImportError:
 
 import pid
 
-pid.DEFAULT_PID_DIR = "/tmp"
+pid.DEFAULT_PID_DIR = tempfile.gettempdir()
+
+if sys.platform == "win32":
+    # Fix backslashes on windows to properly execute "run" command
+    pid.DEFAULT_PID_DIR = pid.DEFAULT_PID_DIR.replace("\\", "/")
 
 
 # https://code.google.com/p/python-nose/issues/detail?id=175
