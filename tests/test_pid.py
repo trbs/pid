@@ -403,13 +403,13 @@ def test_pid_check_samepid_with_blocks():
     if sys.platform != "win32":
         check_samepid_with_blocks_separate_objects()
     else:
-        with raising(pid.SamePidFileNotSupported):
+        with raising(pid.PidFileConfigurationError):
             check_samepid_with_blocks_separate_objects()
 
     if sys.platform != "win32":
         check_samepid_with_blocks_same_objects()
     else:
-        with raising(pid.SamePidFileNotSupported):
+        with raising(pid.PidFileConfigurationError):
             check_samepid_with_blocks_same_objects()
 
 
@@ -428,7 +428,7 @@ def test_pid_check_samepid():
     if sys.platform != "win32":
         check_samepid()
     else:
-        with raising(pid.SamePidFileNotSupported):
+        with raising(pid.PidFileConfigurationError):
             check_samepid()
 
 
