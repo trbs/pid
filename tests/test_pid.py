@@ -432,6 +432,7 @@ def test_pid_check_samepid():
             check_samepid()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="test not supported on win32")
 @patch("os.getpid")
 @patch("os.kill")
 def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_getpid, mock_kill):
