@@ -11,8 +11,8 @@ from .base import (
 
 
 class PidFile(PidFileBase):
-    def __init__(self):
-        super(PidFile, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(PidFile, self).__init__(*args, **kwargs)
         if self.allow_samepid:
             raise SamePidFileNotSupported("Flag allow_samepid is not supported on non-POSIX systems")
 
