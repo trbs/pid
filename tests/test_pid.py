@@ -357,7 +357,7 @@ def test_pid_check_const_samepid():
     if sys.platform != "win32":
         check_const_samepid()
     else:
-        with raising(pid.SamePidFileNotSupported):
+        with raising(pid.PidFileConfigurationError):
             check_const_samepid()
 
 

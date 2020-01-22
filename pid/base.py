@@ -38,10 +38,6 @@ class PidFileAlreadyLockedError(PidFileError):
     pass
 
 
-class SamePidFileNotSupported(PidFileError):
-    pass
-
-
 class PidFileBase(object):
     __slots__ = (
         "pid", "pidname", "piddir", "enforce_dotpid_postfix",

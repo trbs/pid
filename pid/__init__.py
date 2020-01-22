@@ -10,7 +10,6 @@ from .base import (
     PidFileUnreadableError,
     PidFileAlreadyRunningError,
     PidFileAlreadyLockedError,
-    SamePidFileNotSupported,
 )
 
 if sys.platform == "win32":
@@ -33,5 +32,4 @@ __all__ = [
     'PidFileUnreadableError',
     'PidFileAlreadyRunningError',
     'PidFileAlreadyLockedError',
-    'SamePidFileNotSupported',
 ]

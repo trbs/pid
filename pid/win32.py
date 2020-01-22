@@ -5,7 +5,6 @@ from .base import (
     DEFAULT_CHMOD,
     PidFileBase,
     PidFileAlreadyRunningError,
-    SamePidFileNotSupported,
     PidFileConfigurationError,
 )
 
@@ -14,7 +13,13 @@ class PidFile(PidFileBase):
     def __init__(self, *args, **kwargs):
         super(PidFile, self).__init__(*args, **kwargs)
         if self.allow_samepid:
-            raise SamePidFileNotSupported("Flag allow_samepid is not supported on non-POSIX systems")
+            raise PidFileConfigurationError("Flag allow_samepid is not supported on non-POSIX systems")
+
+        if self.chmod and self.chmod != DEFAULT_CHMOD:
+            raise PidFileConfigurationError("chmod is not supported on non-POSIX systems")
+
+        if self.uid >= 0 or self.gid >= 0:
+            raise PidFileConfigurationError("chown is not supported on non-POSIX systems")
 
     def _inner_check(self, fh):
         # Try to read from file to check if it is locked by the same process
@@ -38,9 +43,7 @@ class PidFile(PidFileBase):
         self.fh.read(1)
 
     def _chmod(self):
-        if self.chmod and self.chmod != DEFAULT_CHMOD:
-            raise PidFileConfigurationError("chmod supported on win32")
+        pass
 
     def _chown(self):
-        if self.uid >= 0 or self.gid >= 0:
-            raise PidFileConfigurationError("chown supported on win32")
+        pass
