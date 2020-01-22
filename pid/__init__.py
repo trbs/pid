@@ -5,14 +5,14 @@ import atexit
 import signal
 import logging
 import tempfile
+from .utils import determine_pid_directory, effective_access
+
 if sys.platform == "win32":
     import msvcrt  # NOQA
     # Using psutil library for windows instead of os.kill call
     import psutil
 else:
     import fcntl
-
-from .utils import determine_pid_directory, effective_access
 
 
 __version__ = "2.2.5"
