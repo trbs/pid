@@ -2,6 +2,7 @@ import msvcrt  # NOQA
 # Using psutil library for windows instead of os.kill call
 import psutil
 from .base import (
+    DEFAULT_CHMOD,
     PidFileBase,
     PidFileAlreadyRunningError,
     SamePidFileNotSupported,
@@ -37,7 +38,7 @@ class PidFile(PidFileBase):
         self.fh.read(1)
 
     def _chmod(self):
-        if self.chmod:
+        if self.chmod and self.chmod != DEFAULT_CHMOD:
             raise PidFileConfigurationError("chmod supported on win32")
 
     def _chown(self):

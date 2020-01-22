@@ -11,6 +11,7 @@ from .utils import (
 )
 
 DEFAULT_PID_DIR = determine_pid_directory()
+DEFAULT_CHMOD = 0o644
 PID_CHECK_EMPTY = "PID_CHECK_EMPTY"
 PID_CHECK_NOFILE = "PID_CHECK_NOFILE"
 PID_CHECK_SAMEPID = "PID_CHECK_SAMEPID"
@@ -51,7 +52,7 @@ class PidFileBase(object):
 
     def __init__(self, pidname=None, piddir=None, enforce_dotpid_postfix=True,
                  register_term_signal_handler="auto", register_atexit=True,
-                 lock_pidfile=True, chmod=0o644, uid=-1, gid=-1, force_tmpdir=False,
+                 lock_pidfile=True, chmod=DEFAULT_CHMOD, uid=-1, gid=-1, force_tmpdir=False,
                  allow_samepid=False):
         self.pidname = pidname
         self.piddir = piddir
