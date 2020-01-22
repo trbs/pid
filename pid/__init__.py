@@ -1,11 +1,17 @@
 import os
 import sys
 import errno
-import fcntl
 import atexit
 import signal
 import logging
 import tempfile
+if sys.platform == "win32":
+    import msvcrt  # NOQA
+    # Using psutil library for windows instead of os.kill call
+    import psutil
+else:
+    import fcntl
+
 from .utils import determine_pid_directory, effective_access
 
 
@@ -22,6 +28,10 @@ class PidFileError(Exception):
     pass
 
 
+class PidFileConfigurationError(Exception):
+    pass
+
+
 class PidFileUnreadableError(PidFileError):
     pass
 
@@ -34,7 +44,11 @@ class PidFileAlreadyLockedError(PidFileError):
     pass
 
 
-class PidFile(object):
+class SamePidFileNotSupported(PidFileError):
+    pass
+
+
+class PidFileBase(object):
     __slots__ = (
         "pid", "pidname", "piddir", "enforce_dotpid_postfix",
         "register_term_signal_handler", "register_atexit", "filename",
@@ -129,32 +143,51 @@ class PidFile(object):
 
             signal.signal(signal.SIGTERM, sigterm_noop_handler)
 
-    def check(self):
-        def inner_check(fh):
-            try:
-                fh.seek(0)
-                pid_str = fh.read(16).split("\n", 1)[0].strip()
-                if not pid_str:
-                    return PID_CHECK_EMPTY
-                pid = int(pid_str)
-            except (IOError, ValueError) as exc:
-                self.close(fh=fh)
-                raise PidFileUnreadableError(exc)
+    def _pid_exists(self, pid):
+        try:
+            os.kill(pid, 0)
+        except OSError as exc:
+            if exc.errno == errno.ESRCH:
+                # this pid is not running
+                return False
+            raise PidFileAlreadyRunningError(exc)
+        return True
+
+    def _inner_check(self, fh):
+        try:
+            fh.seek(0)
+            pid_str = fh.read(16).split("\n", 1)[0].strip()
+            if not pid_str:
+                return PID_CHECK_EMPTY
+            pid = int(pid_str)
+        except (IOError, ValueError) as exc:
+            self.close(fh=fh)
+            raise PidFileUnreadableError(exc)
+        else:
+            if self.allow_samepid and self.pid == pid:
+                return PID_CHECK_SAMEPID
+
+        try:
+            if self._pid_exists(pid):
+                raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
             else:
-                if self.allow_samepid and self.pid == pid:
-                    return PID_CHECK_SAMEPID
-
-            try:
-                os.kill(pid, 0)
-            except OSError as exc:
-                if exc.errno == errno.ESRCH:
-                    # this pid is not running
-                    return PID_CHECK_NOTRUNNING
-                self.close(fh=fh, cleanup=False)
-                raise PidFileAlreadyRunningError(exc)
+                return PID_CHECK_NOTRUNNING
+        except PidFileAlreadyRunningError:
             self.close(fh=fh, cleanup=False)
-            raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
+            raise
 
+    def _flock(self, fileno):
+        fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+    def _chmod(self):
+        if self.chmod:
+            os.fchmod(self.fh.fileno(), self.chmod)
+
+    def _chown(self):
+        if self.uid >= 0 or self.gid >= 0:
+            os.fchown(self.fh.fileno(), self.uid, self.gid)
+
+    def check(self):
         self.setup()
 
         self.logger.debug("%r check pidfile: %s", self, self.filename)
@@ -162,10 +195,10 @@ class PidFile(object):
         if self.fh is None:
             if self.filename and os.path.isfile(self.filename):
                 with open(self.filename, "r") as fh:
-                    return inner_check(fh)
+                    return self._inner_check(fh)
             return PID_CHECK_NOFILE
 
-        return inner_check(self.fh)
+        return self._inner_check(self.fh)
 
     def create(self):
         self.setup()
@@ -174,7 +207,7 @@ class PidFile(object):
         self.fh = open(self.filename, "a+")
         if self.lock_pidfile:
             try:
-                fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                self._flock(self.fh.fileno())
             except IOError as exc:
                 if not self.allow_samepid:
                     self.close(cleanup=False)
@@ -184,10 +217,9 @@ class PidFile(object):
         if check_result == PID_CHECK_SAMEPID:
             return
 
-        if self.chmod:
-            os.fchmod(self.fh.fileno(), self.chmod)
-        if self.uid >= 0 or self.gid >= 0:
-            os.fchown(self.fh.fileno(), self.uid, self.gid)
+        self._chmod()
+        self._chown()
+
         self.fh.seek(0)
         self.fh.truncate()
         # pidfile must be composed of the pid number and a newline character
@@ -221,3 +253,44 @@ class PidFile(object):
 
     def __exit__(self, exc_type=None, exc_value=None, exc_tb=None):
         self.close()
+
+
+if sys.platform == "win32":
+    class PidFileWindows(PidFileBase):
+        def __init__(self):
+            super(PidFileWindows, self).__init__()
+            if sys.platform == "win32" and self.allow_samepid:
+                raise SamePidFileNotSupported("Flag allow_samepid is not supported on non-POSIX systems")
+
+        def _inner_check(self, fh):
+            # Try to read from file to check if it is locked by the same process
+            try:
+                fh.seek(0)
+                fh.read(1)
+            except IOError as exc:
+                self.close(fh=fh, cleanup=False)
+                if exc.errno == 13:
+                    raise PidFileAlreadyRunningError(exc)
+                else:
+                    raise
+            return super(PidFileWindows, self)._inner_check(fh)
+
+        def _pid_exists(self, pid):
+            return psutil.pid_exists(pid)
+
+        def _flock(self, fileno):
+            msvcrt.locking(self.fh.fileno(), msvcrt.LK_NBLCK, 1)
+            # Try to read from file to check if it is actually locked
+            self.fh.seek(0)
+            self.fh.read(1)
+
+        def _chmod(self):
+            if self.chmod:
+                raise PidFileConfigurationError("chmod supported on win32")
+
+        def _chown(self):
+            if self.uid >= 0 or self.gid >= 0:
+                raise PidFileConfigurationError("chown supported on win32")
+else:
+    class PidFile(PidFileBase):
+        pass

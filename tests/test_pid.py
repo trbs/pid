@@ -58,6 +58,19 @@ def raising(*exc_types):
         raise AssertionError("Failed to throw exception of type(s) %s." % (", ".join(exc_type.__name__ for exc_type in exc_types),))
 
 
+@contextmanager
+def raising_windows_io_error():
+    try:
+        yield
+    except IOError as exc:
+        if exc.errno != 13:
+            raise
+    except Exception:
+        raise
+    else:
+        raise AssertionError("Failed to throw exception")
+
+
 def test_pid_class():
     pidfile = pid.PidFile()
     pidfile.create()
@@ -72,10 +85,28 @@ def test_pid_context_manager():
     assert not os.path.exists(pidfile.filename)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
 def test_pid_pid():
     with pid.PidFile() as pidfile:
         pidnr = int(open(pidfile.filename, "r").readline().strip())
         assert pidnr == os.getpid(), "%s != %s" % (pidnr, os.getpid())
+    assert not os.path.exists(pidfile.filename)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="only runs on windows")
+def test_pid_pid_win32():
+    def read_pidfile_data():
+        return open(pidfile.filename, "r").readline().strip()
+
+    with pid.PidFile() as pidfile:
+        # On windows Python2 opens a file but reads an empty line from it
+        # Python3 throws IOError(13, Access denied) instead, which we are catching with raising_windows_io_error()
+        if sys.version_info.major < 3:
+            pidtext = read_pidfile_data()
+            assert pidtext == "", "Read '%s' from locked file on Windows with Python2" % (pidtext)
+        else:
+            with raising_windows_io_error():
+                pidtext = read_pidfile_data()
     assert not os.path.exists(pidfile.filename)
 
 
@@ -274,6 +305,7 @@ def test_pid_multiplecreate():
     assert not os.path.exists(pidfile.filename)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="os.getgid() does not exist on windows")
 def test_pid_gid():
     gid = os.getgid()
     with pid.PidFile(gid=gid) as pidfile:
@@ -299,18 +331,33 @@ def test_pid_check_const_nofile():
 
 
 def test_pid_check_const_samepid():
-    with pid.PidFile(allow_samepid=True) as pidfile:
-        assert pidfile.check() == pid.PID_CHECK_SAMEPID
-    assert not os.path.exists(pidfile.filename)
+    def check_const_samepid():
+        with pid.PidFile(allow_samepid=True) as pidfile:
+            assert pidfile.check() == pid.PID_CHECK_SAMEPID
+        assert not os.path.exists(pidfile.filename)
+
+    if sys.platform != "win32":
+        check_const_samepid()
+    else:
+        with raising(pid.SamePidFileNotSupported):
+            check_const_samepid()
 
 
 def test_pid_check_const_notrunning():
-    with pid.PidFile() as pidfile:
-        with open(pidfile.filename, "w") as f:
-            # hope this does not clash
-            f.write("999999999\n")
-        assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
-    assert not os.path.exists(pidfile.filename)
+    def check_const_notrunning():
+        with pid.PidFile() as pidfile:
+            with open(pidfile.filename, "w") as f:
+                # hope this does not clash
+                f.write("999999999\n")
+                f.flush()
+                assert pidfile.check() == pid.PID_CHECK_NOTRUNNING
+        assert not os.path.exists(pidfile.filename)
+
+    if sys.platform != "win32":
+        check_const_notrunning()
+    else:
+        with raising_windows_io_error():
+            check_const_notrunning()
 
 
 def test_pid_check_already_running():
@@ -322,28 +369,49 @@ def test_pid_check_already_running():
 
 
 def test_pid_check_samepid_with_blocks():
-    with pid.PidFile(allow_samepid=True):
+    def check_samepid_with_blocks_separate_objects():
         with pid.PidFile(allow_samepid=True):
-            pass
+            with pid.PidFile(allow_samepid=True):
+                pass
 
-    pidfile = pid.PidFile(allow_samepid=True)
-    with pidfile:
+    def check_samepid_with_blocks_same_objects():
+        pidfile = pid.PidFile(allow_samepid=True)
         with pidfile:
-            pass
+            with pidfile:
+                pass
 
-    assert not os.path.exists(pidfile.filename)
+        assert not os.path.exists(pidfile.filename)
+
+    if sys.platform != "win32":
+        check_samepid_with_blocks_separate_objects()
+    else:
+        with raising(pid.SamePidFileNotSupported):
+            check_samepid_with_blocks_separate_objects()
+
+    if sys.platform != "win32":
+        check_samepid_with_blocks_same_objects()
+    else:
+        with raising(pid.SamePidFileNotSupported):
+            check_samepid_with_blocks_same_objects()
 
 
 def test_pid_check_samepid():
-    pidfile = pid.PidFile(allow_samepid=True)
+    def check_samepid():
+        pidfile = pid.PidFile(allow_samepid=True)
 
-    try:
-        pidfile.create()
-        pidfile.create()
-    finally:
-        pidfile.close()
+        try:
+            pidfile.create()
+            pidfile.create()
+        finally:
+            pidfile.close()
 
-    assert not os.path.exists(pidfile.filename)
+        assert not os.path.exists(pidfile.filename)
+
+    if sys.platform != "win32":
+        check_samepid()
+    else:
+        with raising(pid.SamePidFileNotSupported):
+            check_samepid()
 
 
 @patch("os.getpid")
