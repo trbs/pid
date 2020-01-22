@@ -186,10 +186,18 @@ def test_pid_supply_term_signal_handler():
     assert not os.path.exists(pidfile.filename)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
 def test_pid_chmod():
     with pid.PidFile(chmod=0o600) as pidfile:
         pass
     assert not os.path.exists(pidfile.filename)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="only runs on windows")
+def test_pid_chmod_win32():
+    with raising(pid.PidFileConfigurationError):
+        with pid.PidFile(chmod=0o600):
+            pass
 
 
 def test_pid_already_locked():
@@ -313,6 +321,14 @@ def test_pid_gid():
     with pid.PidFile(gid=gid) as pidfile:
         pass
     assert not os.path.exists(pidfile.filename)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="only runs on windows")
+def test_pid_gid_win32():
+    gid = 123
+    with raising(pid.PidFileConfigurationError):
+        with pid.PidFile(gid=gid):
+            pass
 
 
 def test_pid_check_const_empty():
