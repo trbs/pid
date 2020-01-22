@@ -211,15 +211,17 @@ def test_pid_already_locked_custom_name():
 
 
 def test_pid_already_locked_multi_process():
-    with pid.PidFile() as _pid:
+    pidname = "test_pid_already_locked_multi_process"
+    piddir = pid.DEFAULT_PID_DIR
+    with pid.PidFile(pidname=pidname, piddir=piddir) as _pid:
         s = """
 import sys, pid
 try:
-    with pid.PidFile("%s", piddir="%s"):
+    with pid.PidFile(pidname="%s", piddir="%s"):
         pass
 except pid.PidFileAlreadyLockedError:
     sys.exit(123)
-""" % (os.path.basename(sys.argv[0]), pid.DEFAULT_PID_DIR)
+""" % (pidname, piddir)
         result = run([sys.executable, '-c', s])
         returncode = result if isinstance(result, int) else result.returncode
         assert returncode == 123
