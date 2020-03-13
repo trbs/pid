@@ -18,7 +18,7 @@ else:
     from .posix import PidFile  # NOQA
 
 
-__version__ = "2.2.5"
+__version__ = "3.0.0"
 __all__ = [
     '__version__',
     'DEFAULT_PID_DIR',
