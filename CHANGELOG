@@ -1,6 +1,15 @@
 Changelog
 =========
 
+3.0.0
+-----
+
+ - Windows support (see #18)
+ - Determine pid directory more extensively
+ - Use effective uid if available
+ - Rename SamePidFileNotSupported to PidFileConfigurationError
+
+
 2.2.5
 -----
 
