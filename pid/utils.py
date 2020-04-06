@@ -27,7 +27,7 @@ def determine_pid_directory():
     ]
 
     for path in paths:
-        if effective_access(path, os.W_OK | os.X_OK):
+        if effective_access(os.path.realpath(path), os.W_OK | os.X_OK):
             return path
 
     return tempfile.gettempdir()
