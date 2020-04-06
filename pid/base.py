@@ -9,6 +9,11 @@ from .utils import (
     determine_pid_directory,
     effective_access,
 )
+try:
+    from contextlib import ContextDecorator as BaseObject
+except ImportError:
+    BaseObject = object
+
 
 DEFAULT_PID_DIR = determine_pid_directory()
 DEFAULT_CHMOD = 0o644
@@ -38,7 +43,7 @@ class PidFileAlreadyLockedError(PidFileError):
     pass
 
 
-class PidFileBase(object):
+class PidFileBase(BaseObject):
     __slots__ = (
         "pid", "pidname", "piddir", "enforce_dotpid_postfix",
         "register_term_signal_handler", "register_atexit", "filename",

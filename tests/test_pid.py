@@ -520,6 +520,28 @@ def test_double_close_race_condition():
     assert not os.path.exists(pidfile2.filename)
 
 
+@pytest.mark.skipif(sys.version_info < (3, 2), reason="requires python3.2 or higher")
+def test_pid_contextdecorator():
+    @pid.PidFile()
+    def test_decorator():
+        pass
+
+    test_decorator()
+
+
+@pytest.mark.skipif(sys.version_info < (3, 2), reason="requires python3.2 or higher")
+def test_pid_contextdecorator_already_locked():
+    @pid.PidFile("testpiddecorator")
+    def test_decorator():
+        with raising(pid.PidFileAlreadyLockedError):
+            @pid.PidFile("testpiddecorator")
+            def test_decorator2():
+                pass
+            test_decorator2()
+
+    test_decorator()
+
+
 @pytest.mark.skipif(sys.version_info < (3, 5), reason="requires python3.5 or higher")
 @patch("atexit.register", autospec=True)
 def test_register_atexit_false(mock_atexit_register):
