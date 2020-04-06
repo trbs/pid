@@ -1,6 +1,12 @@
 Changelog
 =========
 
+3.0.3
+-----
+
+ - Add pid number to PidFileAlreadyRunningError
+
+
 3.0.2
 -----
 
