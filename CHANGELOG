@@ -1,10 +1,16 @@
 Changelog
 =========
 
+3.0.2
+-----
+
+ - Support contextlib.ContextDecorator (github #29)
+
+
 3.0.1
 -----
 
- - use realpath when detecting pid (run) directories
+ - Use realpath when detecting pid (run) directories
 
 
 3.0.0
