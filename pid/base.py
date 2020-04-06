@@ -36,7 +36,9 @@ class PidFileUnreadableError(PidFileError):
 
 
 class PidFileAlreadyRunningError(PidFileError):
-    pass
+    def __init__(self, message, pid=None):
+        self.message = message
+        self.pid = pid
 
 
 class PidFileAlreadyLockedError(PidFileError):
@@ -154,7 +156,7 @@ class PidFileBase(BaseObject):
 
         try:
             if self._pid_exists(pid):
-                raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid)
+                raise PidFileAlreadyRunningError("Program already running with pid: %d" % pid, pid=pid)
             else:
                 return PID_CHECK_NOTRUNNING
         except PidFileAlreadyRunningError:

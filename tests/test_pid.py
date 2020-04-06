@@ -270,6 +270,17 @@ def test_pid_already_running_custom_name():
     assert not os.path.exists(_pid.filename)
 
 
+def test_pid_already_running_exception_has_pid_value():
+    with pid.PidFile(lock_pidfile=False, pidname="testpidfile") as _pid:
+        with pytest.raises(pid.PidFileAlreadyRunningError) as excinfo:
+            with pid.PidFile(lock_pidfile=False, pidname="testpidfile"):
+                pass
+        assert excinfo.value.pid is not None
+        assert excinfo.value.pid > 0
+        assert os.path.exists(_pid.filename)
+    assert not os.path.exists(_pid.filename)
+
+
 def test_pid_decorator():
     from pid.decorator import pidfile
 
