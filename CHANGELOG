@@ -1,6 +1,12 @@
 Changelog
 =========
 
+3.0.1
+-----
+
+ - use realpath when detecting pid (run) directories
+
+
 3.0.0
 -----
 
