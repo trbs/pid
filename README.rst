@@ -23,8 +23,8 @@ PidFile class featuring:
  - chown
  - custom exceptions
 
-Context Manager
----------------
+Context Manager, Daemons and Logging
+------------------------------------
 
 PidFile can be used as a context manager::
 
@@ -37,6 +37,53 @@ PidFile can be used as a context manager::
     print(os.listdir('/var/run')) # -> ['foo.pid']
 
   # pid file will delete after 'with' literal.
+
+|
+
+Logging to file is also possible when using PidFile with a daemon context manager
+(e.g. `python-daemon <https://pypi.python.org/pypi/python-daemon/>`_). This requires some care in
+handling the open files when the daemon starts to avoid closing them, which causes problems with the
+logging. In particular, the open handlers should be preserved::
+
+  import sys
+  import logging
+  import logging.config
+
+  import daemon
+  from pid impor PidFile
+
+  logging.config.fileConfig(fname="logging.conf", disable_existing_loggers=False)
+  log = logging.getLogger(__name__)
+
+  PIDNAME = "/tmp/mydaemon.pid"
+
+  def get_logging_handles(logger):
+      handles = []
+      for handler in logger.handlers:
+          handles.append(handler.stream.fileno())
+      if logger.parent:
+          handles += get_logging_handles(logger.parent)
+      return handles
+
+  def daemonize():
+    file_preserve = get_logging_handles(logging.root)
+    pid_file = PidFile(pidname=PIDNAME)
+
+    with daemon.DaemonContext(stdout=sys.stdout,
+                              stderr=sys.stderr,
+                              stdin=sys.stdin,
+                              pidfile=_pid_file,
+                              files_preserve=files_preserve):
+
+      run_daemon_job()
+    print("DONE!")
+
+  if __name__ == "__main__":
+    daemonize()
+
+This assumes a `logging.conf` file has been created, see e.g. `basic tutorial
+<https://docs.python.org/3/howto/logging.html#logging-basic-tutorial>`_ for logging.
+
 
 Decorator
 ---------
