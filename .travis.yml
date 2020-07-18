@@ -41,7 +41,7 @@ install:
       export PATH="/c/Python${PY_VERSION_PATH}:/c/Python${PY_VERSION_PATH}/Scripts:$PATH";
       python -m pip install --upgrade pip wheel;
     fi
-  - pip install flake8 pytest pytest-cov
+  - pip install -U flake8 pytest pytest-cov
   - dpkg --compare-versions $TRAVIS_PYTHON_VERSION ge 3.3 || pip install "mock>=2.0.0"
   - pip install -e .
 
