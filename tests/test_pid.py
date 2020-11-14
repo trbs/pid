@@ -25,39 +25,6 @@ if sys.platform == "win32":
     pid.DEFAULT_PID_DIR = pid.DEFAULT_PID_DIR.replace("\\", "/")
 
 
-# https://code.google.com/p/python-nose/issues/detail?id=175
-@contextmanager
-def raising(*exc_types):
-    """
-    A context manager to ensure that an exception of a given list of
-    types is thrown.
-
-    Instead of::
-
-      @nose.tools.raises(ValueError)
-      def test_that_raises():
-        # ... lengthy setup
-        raise ValueError
-
-    you can write::
-
-      def test_that_raises_at_the_end():
-        # ... lengthy setup
-        with raising(ValueError):
-          raise ValueError
-
-    to make the scope for catching exceptions as small as possible.
-    """
-    try:
-        yield
-    except exc_types:
-        pass
-    except Exception:
-        raise
-    else:
-        raise AssertionError("Failed to throw exception of type(s) %s." % (", ".join(exc_type.__name__ for exc_type in exc_types),))
-
-
 @contextmanager
 def raising_windows_io_error():
     try:
@@ -136,7 +103,7 @@ def test_pid_custom_dir():
 
 def test_pid_piddir_exists_as_file():
     with tempfile.NamedTemporaryFile() as tmpfile:
-        with raising(IOError):
+        with pytest.raises(IOError):
             with pid.PidFile(piddir=tmpfile.name):
                 pass
 
@@ -195,14 +162,14 @@ def test_pid_chmod():
 
 @pytest.mark.skipif(sys.platform != "win32", reason="only runs on windows")
 def test_pid_chmod_win32():
-    with raising(pid.PidFileConfigurationError):
+    with pytest.raises(pid.PidFileConfigurationError):
         with pid.PidFile(chmod=0o600):
             pass
 
 
 def test_pid_already_locked():
     with pid.PidFile() as _pid:
-        with raising(pid.PidFileAlreadyLockedError):
+        with pytest.raises(pid.PidFileAlreadyLockedError):
             with pid.PidFile():
                 pass
         assert os.path.exists(_pid.filename)
@@ -211,7 +178,7 @@ def test_pid_already_locked():
 
 def test_pid_already_locked_custom_name():
     with pid.PidFile(pidname="testpidfile") as _pid:
-        with raising(pid.PidFileAlreadyLockedError):
+        with pytest.raises(pid.PidFileAlreadyLockedError):
             with pid.PidFile(pidname="testpidfile"):
                 pass
         assert os.path.exists(_pid.filename)
@@ -254,7 +221,7 @@ assert not os.path.exists(_pid.filename)
 
 def test_pid_already_running():
     with pid.PidFile(lock_pidfile=False) as _pid:
-        with raising(pid.PidFileAlreadyRunningError):
+        with pytest.raises(pid.PidFileAlreadyRunningError):
             with pid.PidFile(lock_pidfile=False):
                 pass
         assert os.path.exists(_pid.filename)
@@ -263,7 +230,7 @@ def test_pid_already_running():
 
 def test_pid_already_running_custom_name():
     with pid.PidFile(lock_pidfile=False, pidname="testpidfile") as _pid:
-        with raising(pid.PidFileAlreadyRunningError):
+        with pytest.raises(pid.PidFileAlreadyRunningError):
             with pid.PidFile(lock_pidfile=False, pidname="testpidfile"):
                 pass
         assert os.path.exists(_pid.filename)
@@ -296,7 +263,7 @@ def test_pid_decorator_already_locked():
 
     @pidfile("testpiddecorator")
     def test_decorator():
-        with raising(pid.PidFileAlreadyLockedError):
+        with pytest.raises(pid.PidFileAlreadyLockedError):
             @pidfile("testpiddecorator")
             def test_decorator2():
                 pass
@@ -319,7 +286,7 @@ def test_pid_multiplecreate():
     pidfile = pid.PidFile()
     pidfile.create()
     try:
-        with raising(pid.PidFileAlreadyRunningError, pid.PidFileAlreadyLockedError):
+        with pytest.raises((pid.PidFileAlreadyRunningError, pid.PidFileAlreadyLockedError)):
             pidfile.create()
     finally:
         pidfile.close()
@@ -337,7 +304,7 @@ def test_pid_gid():
 @pytest.mark.skipif(sys.platform != "win32", reason="only runs on windows")
 def test_pid_gid_win32():
     gid = 123
-    with raising(pid.PidFileConfigurationError):
+    with pytest.raises(pid.PidFileConfigurationError):
         with pid.PidFile(gid=gid):
             pass
 
@@ -368,7 +335,7 @@ def test_pid_check_const_samepid():
     if sys.platform != "win32":
         check_const_samepid()
     else:
-        with raising(pid.PidFileConfigurationError):
+        with pytest.raises(pid.PidFileConfigurationError):
             check_const_samepid()
 
 
@@ -392,7 +359,7 @@ def test_pid_check_const_notrunning():
 def test_pid_check_already_running():
     with pid.PidFile() as pidfile:
         pidfile2 = pid.PidFile()
-        with raising(pid.PidFileAlreadyRunningError):
+        with pytest.raises(pid.PidFileAlreadyRunningError):
             pidfile2.check()
     assert not os.path.exists(pidfile.filename)
 
@@ -414,13 +381,13 @@ def test_pid_check_samepid_with_blocks():
     if sys.platform != "win32":
         check_samepid_with_blocks_separate_objects()
     else:
-        with raising(pid.PidFileConfigurationError):
+        with pytest.raises(pid.PidFileConfigurationError):
             check_samepid_with_blocks_separate_objects()
 
     if sys.platform != "win32":
         check_samepid_with_blocks_same_objects()
     else:
-        with raising(pid.PidFileConfigurationError):
+        with pytest.raises(pid.PidFileConfigurationError):
             check_samepid_with_blocks_same_objects()
 
 
@@ -439,7 +406,7 @@ def test_pid_check_samepid():
     if sys.platform != "win32":
         check_samepid()
     else:
-        with raising(pid.PidFileConfigurationError):
+        with pytest.raises(pid.PidFileConfigurationError):
             check_samepid()
 
 
@@ -455,7 +422,7 @@ def test_pid_raises_already_running_when_samepid_and_two_different_pids(mock_get
         pidfile_proc1.create()
 
         mock_getpid.return_value = 2
-        with raising(pid.PidFileAlreadyRunningError):
+        with pytest.raises(pid.PidFileAlreadyRunningError):
             pidfile_proc2.create()
 
     finally:
@@ -544,7 +511,7 @@ def test_pid_contextdecorator():
 def test_pid_contextdecorator_already_locked():
     @pid.PidFile("testpiddecorator")
     def test_decorator():
-        with raising(pid.PidFileAlreadyLockedError):
+        with pytest.raises(pid.PidFileAlreadyLockedError):
             @pid.PidFile("testpiddecorator")
             def test_decorator2():
                 pass
