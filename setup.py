@@ -56,6 +56,10 @@ setup(
     install_requires=[
         'psutil>=5.4.8 ; sys_platform == "win32"',
     ],
-    test_suite='nose.collector',
-    tests_require=['nose>=1.0'],
+    extras_require={
+        'tests': [
+            'mock ; python_version < "3"',
+            'pytest',
+        ]
+    },
 )
